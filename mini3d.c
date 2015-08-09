@@ -705,14 +705,14 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 		}
 
 		if (t1.pos.y == t2.pos.y) {		// t1 在上，t2, t3 在一条水平线上
-			trapezoid_t trape;		// 初始化矩形
+			trapezoid_t trape;		// 初始化梯形
 			trapezoid_init_edge_down(&trape, &t1, &t2, &t3);
-			device_render_trape(device, &trape);	// 渲染矩形
+			device_render_trape(device, &trape);	// 渲染梯形
 		}
 		else if (t2.pos.y == t3.pos.y) {	// t1, t2同水平线，t3在下
 			trapezoid_t trape;
 			trapezoid_init_edge_up(&trape, &t1, &t2, &t3);
-			device_render_trape(device, &trape);	// 渲染矩形
+			device_render_trape(device, &trape);	// 渲染梯形
 		}
 		else {		// t1上，t2中，t3下，计算一个中点 t 使得分成上下两三角形
 			trapezoid_t trape1, trape2;
@@ -720,8 +720,8 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 			vertex_interp(&t, &t1, &t3, middle);
 			trapezoid_init_edge_up(&trape1, &t1, &t2, &t);
 			trapezoid_init_edge_down(&trape2, &t2, &t, &t3);
-			device_render_trape(device, &trape1);	// 渲染上部分矩形
-			device_render_trape(device, &trape2);	// 渲染下部分矩形
+			device_render_trape(device, &trape1);	// 渲染上部分梯形
+			device_render_trape(device, &trape2);	// 渲染下部分梯形
 		}
 	}
 
