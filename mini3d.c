@@ -34,7 +34,7 @@ typedef vector_t point_t;
 
 int CMID(int x, int min, int max) { return (x < min)? min : ((x > max)? max : x); }
 
-// 计算差值：t 为 [0, 1] 之间的数值
+// 计算插值：t 为 [0, 1] 之间的数值
 float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
 
 // | v |
@@ -64,7 +64,7 @@ float vector_dotproduct(const vector_t *x, const vector_t *y) {
 	return x->x * y->x + x->y * y->y + x->z * y->z;
 }
 
-// 矢量差乘
+// 矢量叉乘
 void vector_crossproduct(vector_t *z, const vector_t *x, const vector_t *y) {
 	float m1, m2, m3;
 	m1 = x->y * y->z - x->z * y->y;
