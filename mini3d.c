@@ -3,8 +3,8 @@
 // mini3d.c - Mini Software Render All-In-One
 //
 // build:
-//   mingw: gcc -O3 mini3d.c -o mini3d.exe
-//   msvc:  cl -O2 -nologo mini3d.c -lgdi32
+//   mingw: gcc -O3 mini3d.c -o mini3d.exe -lgdi32
+//   msvc:  cl -O2 -nologo mini3d.c 
 //
 // history:
 //   2007.7.01  skywind  create this file as a tutorial
