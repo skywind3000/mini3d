@@ -238,17 +238,6 @@ void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, flo
 	m->m[2][3] = 1;
 }
 
-long _cftoi_ieee(float f) {
-	union { long intpart; float floatpart; } convert;
-	long sign, mantissa, exponent, r;
-	convert.floatpart = f;
-	sign = (convert.intpart >> 31);
-	mantissa = (convert.intpart & ((1 << 23) - 1)) | (1 << 23);
-	exponent = ((convert.intpart & 0x7ffffffful) >> 23) - 127;
-	r = ((unsigned long)(mantissa) << 8) >> (31 - exponent);
-	return ((r ^ sign) - sign) & ~(exponent >> 31);
-}
-
 
 //=====================================================================
 // 坐标变换
@@ -257,9 +246,10 @@ typedef struct {
 	matrix_t world;         // 世界坐标变换
 	matrix_t view;          // 摄影机坐标变换
 	matrix_t projection;    // 投影变换
-	matrix_t transform;	    // transform = world * view * projection
+	matrix_t transform;     // transform = world * view * projection
 	float w, h;             // 屏幕大小
 }	transform_t;
+
 
 // 矩阵更新，计算 transform = world * view * projection
 void transform_update(transform_t *ts) {
@@ -608,8 +598,8 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	int x, y;
 	u = u * device->max_u;
 	v = v * device->max_v;
-	x = (int)_cftoi_ieee(u + 0.5f);
-	y = (int)_cftoi_ieee(v + 0.5f);
+	x = (int)(u + 0.5f);
+	y = (int)(v + 0.5f);
 	x = CMID(x, 0, device->tex_width - 1);
 	y = CMID(y, 0, device->tex_height - 1);
 	return device->texture[y][x];
@@ -638,9 +628,9 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 					float r = scanline->v.color.r * w;
 					float g = scanline->v.color.g * w;
 					float b = scanline->v.color.b * w;
-					int R = (int)_cftoi_ieee(r * 255.0f);
-					int G = (int)_cftoi_ieee(g * 255.0f);
-					int B = (int)_cftoi_ieee(b * 255.0f);
+					int R = (int)(r * 255.0f);
+					int G = (int)(g * 255.0f);
+					int B = (int)(b * 255.0f);
 					R = CMID(R, 0, 255);
 					G = CMID(G, 0, 255);
 					B = CMID(B, 0, 255);
@@ -973,5 +963,4 @@ int main(void)
 	}
 	return 0;
 }
-
 
