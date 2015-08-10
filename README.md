@@ -23,11 +23,11 @@
 演示
 ===
 
-色彩填充：RENDER_STATE_COLOR
-![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_0.png)
-
 纹理填充：RENDER_STATE_TEXTURE
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_1.png)
+
+色彩填充：RENDER_STATE_COLOR
+![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_0.png)
 
 线框绘制：RENDER_STATE_WIREFRAME
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_2.png)
