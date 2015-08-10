@@ -20,6 +20,8 @@
 		gcc -O3 mini3d.c -o mini3d.exe -lgdi32
 * msvc:
 		cl -O2 -nologo mini3d.c 
+* 已编译版本：
+[http://www.skywind.me/mw/images/c/c8/Mini3d.7z](http://www.skywind.me/mw/images/c/c8/Mini3d.7z "Mini3d.7z")
 
 演示
 ===
@@ -48,6 +50,5 @@
 * 优化 draw_scanline 性能
 * 从 BMP/TGA 文件加载纹理
 * 载入 BSP 场景并实现漫游
-
 
 
