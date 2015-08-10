@@ -16,9 +16,9 @@
 编译
 ===
 * mingw: 
-		gcc -O3 mini3d.c -o mini3d.exe
+		gcc -O3 mini3d.c -o mini3d.exe -lgdi32
 * msvc:
-		cl -O2 -nologo mini3d.c -lgdi32
+		cl -O2 -nologo mini3d.c 
 
 演示
 ===
