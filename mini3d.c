@@ -20,10 +20,7 @@
 
 #include <windows.h>
 
-#ifndef __IUINT32_DEFINED__
-#define __IUINT32_DEFINED__
 typedef unsigned int IUINT32;
-#endif
 
 //=====================================================================
 // 数学库：此部分应该不用详解，熟悉 D3D 矩阵变换即可
@@ -93,14 +90,6 @@ void vector_normalize(vector_t *v) {
 		v->y *= inv;
 		v->z *= inv;
 	}
-}
-
-void vector_set(vector_t *v, float x, float y, float z) {
-	v->x = x; v->y = y; v->z = z; v->w = 1.0f;
-}
-
-void vector_copy(vector_t *y, const vector_t *x) {
-	y->x = x->x; y->y = x->y; y->z = x->z; y->w = x->w;
 }
 
 // c = a + b
@@ -265,11 +254,11 @@ long _cftoi_ieee(float f) {
 // 坐标变换
 //=====================================================================
 typedef struct { 
-	matrix_t world;			// 世界坐标变换
-	matrix_t view;			// 摄影机坐标变换
-	matrix_t projection;	// 投影变换
-	matrix_t transform;		// transform = world * view * projection
-	float w, h;				// 屏幕大小
+	matrix_t world;         // 世界坐标变换
+	matrix_t view;          // 摄影机坐标变换
+	matrix_t projection;    // 投影变换
+	matrix_t transform;	    // transform = world * view * projection
+	float w, h;             // 屏幕大小
 }	transform_t;
 
 // 矩阵更新，计算 transform = world * view * projection
@@ -321,22 +310,13 @@ void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x)
 //=====================================================================
 // 几何计算：顶点、扫描线、边缘、矩形、步长计算
 //=====================================================================
-typedef struct { float r, g, b; } color_t;	// 色彩
-typedef struct { float u, v; } texcoord_t;	// 纹理坐标
+typedef struct { float r, g, b; } color_t;
+typedef struct { float u, v; } texcoord_t;
+typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
 
-// 顶点定义
-typedef struct { 
-	point_t pos;		// 位置
-	texcoord_t tc;		// 纹理坐标
-	color_t color;		// 色彩
-	float rhw;			// 1/w
-}	vertex_t;
-
-typedef struct { vertex_t v, step; } edge_t;	// 多边形边缘
-typedef struct { int top, bottom; edge_t left, right; } trapezoid_t;
-
+typedef struct { vertex_t v, v1, v2; } edge_t;
+typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
 typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
-
 
 void vertex_rhw_init(vertex_t *v) {
 	float rhw = 1.0f / v->pos.w;
@@ -348,7 +328,6 @@ void vertex_rhw_init(vertex_t *v) {
 	v->color.b *= rhw;
 }
 
-// 顶点差值
 void vertex_interp(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float t) {
 	vector_interp(&y->pos, &x1->pos, &x2->pos, t);
 	y->tc.u = interp(x1->tc.u, x2->tc.u, t);
@@ -359,7 +338,6 @@ void vertex_interp(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float t)
 	y->rhw = interp(x1->rhw, x2->rhw, t);
 }
 
-// 步长计算
 void vertex_division(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float w) {
 	float inv = 1.0f / w;
 	y->pos.x = (x2->pos.x - x1->pos.x) * inv;
@@ -374,7 +352,6 @@ void vertex_division(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float 
 	y->rhw = (x2->rhw - x1->rhw) * inv;
 }
 
-// 顶点加法
 void vertex_add(vertex_t *y, const vertex_t *x) {
 	y->pos.x += x->pos.x;
 	y->pos.y += x->pos.y;
@@ -392,45 +369,89 @@ void vertex_add(vertex_t *y, const vertex_t *x) {
 // 2 3
 void trapezoid_init_edge_up(trapezoid_t *trape, 
 	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
-	float height = v2->pos.y - v1->pos.y;
 	const vertex_t *v;
 	if (v2->pos.x > v3->pos.x) v = v2, v2 = v3, v3 = v;
-	trape->top = (int)v1->pos.y;
-	trape->bottom = (int)(v2->pos.y);
+	trape->top = v1->pos.y;
+	trape->bottom = v2->pos.y;
 	trape->left.v = *v1;
 	trape->right.v = *v1;
-	vertex_division(&trape->left.step, v1, v2, height);
-	vertex_division(&trape->right.step, v1, v3, height);
+	trape->left.v1 = *v1;
+	trape->left.v2 = *v2;
+	trape->right.v1 = *v1;
+	trape->right.v2 = *v3;
 }
 
 // 1 2
 //  3
 void trapezoid_init_edge_down(trapezoid_t *trape,
 	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
-	float height = v3->pos.y - v1->pos.y;
 	const vertex_t *v;
 	if (v1->pos.x > v2->pos.x) v = v1, v1 = v2, v2 = v;
-	trape->top = (int)v1->pos.y;
-	trape->bottom = (int)(v3->pos.y);
+	trape->top = v1->pos.y;
+	trape->bottom = v3->pos.y;
 	trape->left.v = *v1;
 	trape->right.v = *v2;
-	vertex_division(&trape->left.step, v1, v3, height);
-	vertex_division(&trape->right.step, v2, v3, height);
+	trape->left.v1 = *v1;
+	trape->left.v2 = *v3;
+	trape->right.v1 = *v2;
+	trape->right.v2 = *v3;
 }
 
-// 梯形左右两边向前移动
-void trapezoid_step_next(trapezoid_t *trape) {
-	vertex_add(&trape->left.v, &trape->left.step);
-	vertex_add(&trape->right.v, &trape->right.step);
+//    1          1
+//   2     or      2
+// (t)  3      3   (t)
+void trapezoid_init_edges(trapezoid_t *up, trapezoid_t *down,
+	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
+	float f = (v3->pos.y - v1->pos.y) / (v2->pos.y - v1->pos.y);
+	vertex_t t1 = *v1;
+	vertex_t t2 = *v2;
+	vertex_t t3 = *v3;
+	vertex_t t;
+
+	up->top = t1.pos.y; 
+	up->bottom = t2.pos.y;
+	down->top = t2.pos.y;
+	down->bottom = t3.pos.y;
+
+	vertex_interp(&t, &t1, &t2, f);
+
+	if (t.pos.x <= t3.pos.x) {
+		up->left.v1 = t1; 
+		up->left.v2 = t2;
+		up->right.v1 = t1; 
+		up->right.v2 = t3;
+		down->left.v1 = t2; 
+		down->left.v2 = t3;
+		down->right.v1 = t1; 
+		down->right.v2 = t3;
+	}	else {
+		up->left.v1 = t1; 
+		up->left.v2 = t3;
+		up->right.v1 = t1; 
+		up->right.v2 = t2;
+		down->left.v1 = t1; 
+		down->left.v2 = t3;
+		down->right.v1 = t2; 
+		down->right.v2 = t3;
+	}
 }
 
-// 初始化扫描线
+void trapezoid_edge_interp(trapezoid_t *trape, float y) {
+	float s1 = trape->left.v2.pos.y - trape->left.v1.pos.y;
+	float s2 = trape->right.v2.pos.y - trape->right.v1.pos.y;
+	float t1 = (y - trape->left.v1.pos.y) / s1;
+	float t2 = (y - trape->right.v1.pos.y) / s2;
+	vertex_interp(&trape->left.v, &trape->left.v1, &trape->left.v2, t1);
+	vertex_interp(&trape->right.v, &trape->right.v1, &trape->right.v2, t2);
+}
+
 void trapezoid_init_scan_line(const trapezoid_t *trape, scanline_t *scanline, int y) {
 	float width = trape->right.v.pos.x - trape->left.v.pos.x;
-	scanline->x = (int)trape->left.v.pos.x;
+	scanline->x = (int)(trape->left.v.pos.x + 0.5f);
 	scanline->w = (int)(trape->right.v.pos.x + 0.5f) - scanline->x;
 	scanline->y = y;
 	scanline->v = trape->left.v;
+	if (trape->left.v.pos.x >= trape->right.v.pos.x) scanline->w = 0;
 	vertex_division(&scanline->step, &trape->left.v, &trape->right.v, width);
 }
 
@@ -439,24 +460,24 @@ void trapezoid_init_scan_line(const trapezoid_t *trape, scanline_t *scanline, in
 // 渲染设备
 //=====================================================================
 typedef struct {
-	transform_t transform;		// 坐标变换器
-	int width;					// 窗口宽度
-	int height;					// 窗口高度
-	IUINT32 **framebuffer;		// 像素缓存：framebuffer[y] 代表第 y行
-	float **zbuffer;			// 深度缓存：zbuffer[y] 为第 y行指针
-	IUINT32 **texture;			// 纹理：同样是每行索引
-	int tex_width;				// 纹理宽度
-	int tex_height;				// 纹理高度
-	float max_u;				// 纹理最大宽度：tex_width - 1
-	float max_v;				// 纹理最大高度：tex_height - 1
-	int render_state;			// 渲染状态
-	IUINT32 background;			// 背景颜色
-	IUINT32 foreground;			// 线框颜色
+	transform_t transform;      // 坐标变换器
+	int width;                  // 窗口宽度
+	int height;                 // 窗口高度
+	IUINT32 **framebuffer;      // 像素缓存：framebuffer[y] 代表第 y行
+	float **zbuffer;            // 深度缓存：zbuffer[y] 为第 y行指针
+	IUINT32 **texture;          // 纹理：同样是每行索引
+	int tex_width;              // 纹理宽度
+	int tex_height;             // 纹理高度
+	float max_u;                // 纹理最大宽度：tex_width - 1
+	float max_v;                // 纹理最大高度：tex_height - 1
+	int render_state;           // 渲染状态
+	IUINT32 background;         // 背景颜色
+	IUINT32 foreground;         // 线框颜色
 }	device_t;
 
-#define RENDER_STATE_WIREFRAME		1		// 渲染线框
-#define RENDER_STATE_TEXTURE		2		// 渲染纹理
-#define RENDER_STATE_COLOR			4		// 渲染颜色
+#define RENDER_STATE_WIREFRAME      1		// 渲染线框
+#define RENDER_STATE_TEXTURE        2		// 渲染纹理
+#define RENDER_STATE_COLOR          4		// 渲染颜色
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -480,13 +501,11 @@ void device_init(device_t *device, int width, int height, void *fb) {
 	}
 	device->texture[0] = (IUINT32*)ptr;
 	device->texture[1] = (IUINT32*)(ptr + 16);
-	device->texture[2] = (IUINT32*)(ptr + 32);
-	device->texture[3] = (IUINT32*)(ptr + 48);
 	memset(device->texture[0], 0, 64);
-	device->tex_width = 4;
-	device->tex_height = 4;
-	device->max_u = 3.0f;
-	device->max_v = 3.0f;
+	device->tex_width = 2;
+	device->tex_height = 2;
+	device->max_u = 1.0f;
+	device->max_v = 1.0f;
 	device->width = width;
 	device->height = height;
 	device->background = 0xc0c0c0;
@@ -509,9 +528,8 @@ void device_set_texture(device_t *device, void *bits, long pitch, int w, int h) 
 	char *ptr = (char*)bits;
 	int j;
 	assert(w <= 1024 && h <= 1024);
-	for (j = 0; j < h; ptr += pitch, j++) {		// 重新计算每行纹理的指针
+	for (j = 0; j < h; ptr += pitch, j++) 	// 重新计算每行纹理的指针
 		device->texture[j] = (IUINT32*)ptr;
-	}
 	device->tex_width = w;
 	device->tex_height = h;
 	device->max_u = (float)(w - 1);
@@ -543,7 +561,7 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
 
 // 绘制线段
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
-	int x, y;
+	int x, y, rem = 0;
 	if (x1 == x2 && y1 == y2) {
 		device_pixel(device, x1, y1, c);
 	}	else if (x1 == x2) {
@@ -557,7 +575,6 @@ void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 
 	}	else {
 		int dx = (x1 < x2)? x2 - x1 : x1 - x2;
 		int dy = (y1 < y2)? y2 - y1 : y1 - y2;
-		int rem = 0;
 		if (dx >= dy) {
 			if (x2 < x1) x = x1, y = y1, x1 = x2, y1 = y2, x2 = x, y2 = y;
 			for (x = x1, y = y1; x <= x2; x++) {
@@ -591,12 +608,10 @@ IUINT32 device_texture_read(const device_t *device, float u, float v) {
 	int x, y;
 	u = u * device->max_u;
 	v = v * device->max_v;
-	x = (int)_cftoi_ieee(u);
-	y = (int)_cftoi_ieee(v);
-	if (x < 0) x = 0;
-	if (y < 0) y = 0;
-	if (x > device->tex_width - 1) x = device->tex_width - 1;
-	if (y > device->tex_height - 1) y = device->tex_height - 1;
+	x = (int)_cftoi_ieee(u + 0.5f);
+	y = (int)_cftoi_ieee(v + 0.5f);
+	x = CMID(x, 0, device->tex_width - 1);
+	y = CMID(y, 0, device->tex_height - 1);
 	return device->texture[y][x];
 }
 
@@ -644,18 +659,19 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 	}
 }
 
-
 // 主渲染函数
 void device_render_trape(device_t *device, trapezoid_t *trape) {
 	scanline_t scanline;
-	int y;
-	for (y = trape->top; y < trape->bottom; y++) {
-		if (y >= 0 && y < device->height) {
-			trapezoid_init_scan_line(trape, &scanline, y);
+	int j, top, bottom;
+	top = (int)(trape->top + 0.5f);
+	bottom = (int)(trape->bottom + 0.5f);
+	for (j = top; j < bottom; j++) {
+		if (j >= 0 && j < device->height) {
+			trapezoid_edge_interp(trape, (float)j + 0.5f);
+			trapezoid_init_scan_line(trape, &scanline, j);
 			device_draw_scanline(device, &scanline);
 		}
-		if (y >= device->height) break;
-		trapezoid_step_next(trape);
+		if (j >= device->height) break;
 	}
 }
 
@@ -683,6 +699,7 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
+		trapezoid_t trape1, trape2;
 		vertex_t t1 = *v1, t2 = *v2, t3 = *v3, t;
 		t1.pos = p1; 
 		t2.pos = p2;
@@ -705,21 +722,15 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 		}
 
 		if (t1.pos.y == t2.pos.y) {		// t1 在上，t2, t3 在一条水平线上
-			trapezoid_t trape;		// 初始化梯形
-			trapezoid_init_edge_down(&trape, &t1, &t2, &t3);
-			device_render_trape(device, &trape);	// 渲染梯形
+			trapezoid_init_edge_down(&trape1, &t1, &t2, &t3);
+			device_render_trape(device, &trape1);	// 渲染梯形
 		}
 		else if (t2.pos.y == t3.pos.y) {	// t1, t2同水平线，t3在下
-			trapezoid_t trape;
-			trapezoid_init_edge_up(&trape, &t1, &t2, &t3);
-			device_render_trape(device, &trape);	// 渲染梯形
+			trapezoid_init_edge_up(&trape2, &t1, &t2, &t3);
+			device_render_trape(device, &trape2);	// 渲染梯形
 		}
 		else {		// t1上，t2中，t3下，计算一个中点 t 使得分成上下两三角形
-			trapezoid_t trape1, trape2;
-			float middle = (t2.pos.y - t1.pos.y) / (t3.pos.y - t1.pos.y);
-			vertex_interp(&t, &t1, &t3, middle);
-			trapezoid_init_edge_up(&trape1, &t1, &t2, &t);
-			trapezoid_init_edge_down(&trape2, &t2, &t, &t3);
+			trapezoid_init_edges(&trape1, &trape2, &t1, &t2, &t3);
 			device_render_trape(device, &trape1);	// 渲染上部分梯形
 			device_render_trape(device, &trape2);	// 渲染下部分梯形
 		}
@@ -792,7 +803,6 @@ int screen_init(int w, int h, const char *title) {
 
 	screen_ob = (HBITMAP)SelectObject(screen_dc, screen_hb);
 	screen_fb = (unsigned char*)ptr;
-
 	screen_w = w;
 	screen_h = h;
 	screen_pitch = w * 4;
@@ -803,8 +813,7 @@ int screen_init(int w, int h, const char *title) {
 	sx = (GetSystemMetrics(SM_CXSCREEN) - wx) / 2;
 	sy = (GetSystemMetrics(SM_CYSCREEN) - wy) / 2;
 	if (sy < 0) sy = 0;
-	SetWindowPos(screen_handle, NULL, sx, sy, wx, wy, 
-			(SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
+	SetWindowPos(screen_handle, NULL, sx, sy, wx, wy, (SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
 	SetForegroundWindow(screen_handle);
 
 	ShowWindow(screen_handle, SW_NORMAL);
@@ -819,19 +828,19 @@ int screen_init(int w, int h, const char *title) {
 int screen_close(void) {
 	if (screen_dc) {
 		if (screen_ob) { 
-			SelectObject(screen_dc, screen_ob);
-			screen_ob = NULL;
+			SelectObject(screen_dc, screen_ob); 
+			screen_ob = NULL; 
 		}
 		DeleteDC(screen_dc);
 		screen_dc = NULL;
 	}
 	if (screen_hb) { 
-		DeleteObject(screen_hb);
-		screen_hb = NULL;
+		DeleteObject(screen_hb); 
+		screen_hb = NULL; 
 	}
-	if (screen_handle) {
-		CloseWindow(screen_handle);
-		screen_handle = NULL;
+	if (screen_handle) { 
+		CloseWindow(screen_handle); 
+		screen_handle = NULL; 
 	}
 	return 0;
 }
@@ -879,14 +888,9 @@ vertex_t mesh[8] = {
 };
 
 void draw_plane(device_t *device, int a, int b, int c, int d) {
-	vertex_t p1 = mesh[a];
-	vertex_t p2 = mesh[b];
-	vertex_t p3 = mesh[c];
-	vertex_t p4 = mesh[d];
-	p1.tc.u = 0, p1.tc.v = 0;
-	p2.tc.u = 0, p2.tc.v = 1;
-	p3.tc.u = 1, p3.tc.v = 1;
-	p4.tc.u = 1, p4.tc.v = 0;
+	vertex_t p1 = mesh[a], p2 = mesh[b], p3 = mesh[c], p4 = mesh[d];
+	p1.tc.u = 0, p1.tc.v = 0, p2.tc.u = 0, p2.tc.v = 1;
+	p3.tc.u = 1, p3.tc.v = 1, p4.tc.u = 1, p4.tc.v = 0;
 	device_draw_primitive(device, &p1, &p2, &p3);
 	device_draw_primitive(device, &p3, &p4, &p1);
 }
@@ -896,7 +900,6 @@ void draw_box(device_t *device, float theta) {
 	matrix_set_rotate(&m, -1, -0.5, 1, theta);
 	device->transform.world = m;
 	transform_update(&device->transform);
-
 	draw_plane(device, 0, 1, 2, 3);
 	draw_plane(device, 4, 5, 6, 7);
 	draw_plane(device, 0, 4, 5, 1);
@@ -913,18 +916,13 @@ void camera_at_zero(device_t *device, float x, float y, float z) {
 
 void init_texture(device_t *device) {
 	static IUINT32 texture[256][256];
-	IUINT32 c0 = 0xffffff, c1 = 0xcccccc, c2 = 0x3fbcef, c3 = 0x55dc55;
 	int i, j;
 	for (j = 0; j < 256; j++) {
 		for (i = 0; i < 256; i++) {
-			int x = i / 32;
-			int y = j / 32;
-			int k = x + y;
-			IUINT32 cc = (k & 1)? c0 : c2;
-			texture[j][i] = cc;
+			int x = i / 32, y = j / 32;
+			texture[j][i] = ((x + y) & 1)? 0xffffff : 0x3fbcef;
 		}
 	}
-	c1 = c1; c2 = c2; c3 = c3;
 	device_set_texture(device, texture, 256 * 4, 256, 256);
 }
 
