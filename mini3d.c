@@ -279,11 +279,11 @@ int transform_check_cvv(const vector_t *v) {
 	float w = v->w;
 	int check = 0;
 	if (v->z < 0.0f) check |= 1;
-	if (v->z >=  w) check |= 2;
-	if (v->x <= -w) check |= 4;
-	if (v->x >=  w) check |= 8;
-	if (v->y <= -w) check |= 16;
-	if (v->y >=  w) check |= 32;
+	if (v->z >  w) check |= 2;
+	if (v->x < -w) check |= 4;
+	if (v->x >  w) check |= 8;
+	if (v->y < -w) check |= 16;
+	if (v->y >  w) check |= 32;
 	return check;
 }
 
