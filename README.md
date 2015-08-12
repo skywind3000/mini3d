@@ -35,7 +35,7 @@
 线框绘制：RENDER_STATE_WIREFRAME
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_2.png)
 
-增加光照和二次线性插值
+增加光照和二次线性插值（朋友给 Mini3D 增加的光照效果截图）
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_3.png)
 
 
