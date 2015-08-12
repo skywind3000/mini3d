@@ -11,6 +11,7 @@
 //   2007.7.02  skywind  implementate texture and color render
 //   2008.3.15  skywind  fixed a trapezoid issue
 //   2015.8.09  skywind  rewrite with more comment
+//   2015.8.12  skywind  adjust interfaces for clearity 
 // 
 //=====================================================================
 #include <stdio.h>
@@ -308,6 +309,7 @@ typedef struct { vertex_t v, v1, v2; } edge_t;
 typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
 typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
 
+
 void vertex_rhw_init(vertex_t *v) {
 	float rhw = 1.0f / v->pos.w;
 	v->rhw = rhw;
@@ -355,94 +357,90 @@ void vertex_add(vertex_t *y, const vertex_t *x) {
 	y->color.b += x->color.b;
 }
 
-//  1
-// 2 3
-void trapezoid_init_edge_up(trapezoid_t *trape, 
-	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
-	const vertex_t *v;
-	if (v2->pos.x > v3->pos.x) v = v2, v2 = v3, v3 = v;
-	trape->top = v1->pos.y;
-	trape->bottom = v2->pos.y;
-	trape->left.v = *v1;
-	trape->right.v = *v1;
-	trape->left.v1 = *v1;
-	trape->left.v2 = *v2;
-	trape->right.v1 = *v1;
-	trape->right.v2 = *v3;
-}
+// 根据三角形生成 0-2 个梯形，并且返回合法梯形的数量
+int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1, 
+	const vertex_t *p2, const vertex_t *p3) {
+	const vertex_t *p;
+	float k, x;
 
-// 1 2
-//  3
-void trapezoid_init_edge_down(trapezoid_t *trape,
-	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
-	const vertex_t *v;
-	if (v1->pos.x > v2->pos.x) v = v1, v1 = v2, v2 = v;
-	trape->top = v1->pos.y;
-	trape->bottom = v3->pos.y;
-	trape->left.v = *v1;
-	trape->right.v = *v2;
-	trape->left.v1 = *v1;
-	trape->left.v2 = *v3;
-	trape->right.v1 = *v2;
-	trape->right.v2 = *v3;
-}
+	if (p1->pos.y > p2->pos.y) p = p1, p1 = p2, p2 = p;
+	if (p1->pos.y > p3->pos.y) p = p1, p1 = p3, p3 = p;
+	if (p2->pos.y > p3->pos.y) p = p2, p2 = p3, p3 = p;
+	if (p1->pos.y == p2->pos.y && p1->pos.y == p3->pos.y) return 0;
+	if (p1->pos.x == p2->pos.x && p1->pos.x == p3->pos.x) return 0;
 
-//    1          1
-//   2     or      2
-// (t)  3      3   (t)
-void trapezoid_init_edges(trapezoid_t *up, trapezoid_t *down,
-	const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
-	float f = (v3->pos.y - v1->pos.y) / (v2->pos.y - v1->pos.y);
-	vertex_t t1 = *v1;
-	vertex_t t2 = *v2;
-	vertex_t t3 = *v3;
-	vertex_t t;
-
-	up->top = t1.pos.y; 
-	up->bottom = t2.pos.y;
-	down->top = t2.pos.y;
-	down->bottom = t3.pos.y;
-
-	vertex_interp(&t, &t1, &t2, f);
-
-	if (t.pos.x <= t3.pos.x) {
-		up->left.v1 = t1; 
-		up->left.v2 = t2;
-		up->right.v1 = t1; 
-		up->right.v2 = t3;
-		down->left.v1 = t2; 
-		down->left.v2 = t3;
-		down->right.v1 = t1; 
-		down->right.v2 = t3;
-	}	else {
-		up->left.v1 = t1; 
-		up->left.v2 = t3;
-		up->right.v1 = t1; 
-		up->right.v2 = t2;
-		down->left.v1 = t1; 
-		down->left.v2 = t3;
-		down->right.v1 = t2; 
-		down->right.v2 = t3;
+	if (p1->pos.y == p2->pos.y) {	// triangle down
+		if (p1->pos.x > p2->pos.x) p = p1, p1 = p2, p2 = p;
+		trap[0].top = p1->pos.y;
+		trap[0].bottom = p3->pos.y;
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p3;
+		trap[0].right.v1 = *p2;
+		trap[0].right.v2 = *p3;
+		return (trap[0].top < trap[0].bottom)? 1 : 0;
 	}
+
+	if (p2->pos.y == p3->pos.y) {	// triangle up
+		if (p2->pos.x > p3->pos.x) p = p2, p2 = p3, p3 = p;
+		trap[0].top = p1->pos.y;
+		trap[0].bottom = p3->pos.y;
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p2;
+		trap[0].right.v1 = *p1;
+		trap[0].right.v2 = *p3;
+		return (trap[0].top < trap[0].bottom)? 1 : 0;
+	}
+
+	trap[0].top = p1->pos.y;
+	trap[0].bottom = p2->pos.y;
+	trap[1].top = p2->pos.y;
+	trap[1].bottom = p3->pos.y;
+
+	k = (p3->pos.y - p1->pos.y) / (p2->pos.y - p1->pos.y);
+	x = p1->pos.x + (p2->pos.x - p1->pos.x) * k;
+
+	if (x <= p3->pos.x) {		// triangle left
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p2;
+		trap[0].right.v1 = *p1;
+		trap[0].right.v2 = *p3;
+		trap[1].left.v1 = *p2;
+		trap[1].left.v2 = *p3;
+		trap[1].right.v1 = *p1;
+		trap[1].right.v2 = *p3;
+	}	else {					// triangle right
+		trap[0].left.v1 = *p1;
+		trap[0].left.v2 = *p3;
+		trap[0].right.v1 = *p1;
+		trap[0].right.v2 = *p2;
+		trap[1].left.v1 = *p1;
+		trap[1].left.v2 = *p3;
+		trap[1].right.v1 = *p2;
+		trap[1].right.v2 = *p3;
+	}
+
+	return 2;
 }
 
-void trapezoid_edge_interp(trapezoid_t *trape, float y) {
-	float s1 = trape->left.v2.pos.y - trape->left.v1.pos.y;
-	float s2 = trape->right.v2.pos.y - trape->right.v1.pos.y;
-	float t1 = (y - trape->left.v1.pos.y) / s1;
-	float t2 = (y - trape->right.v1.pos.y) / s2;
-	vertex_interp(&trape->left.v, &trape->left.v1, &trape->left.v2, t1);
-	vertex_interp(&trape->right.v, &trape->right.v1, &trape->right.v2, t2);
+// 按照 Y 坐标计算出左右两条边纵坐标等于 Y 的顶点
+void trapezoid_edge_interp(trapezoid_t *trap, float y) {
+	float s1 = trap->left.v2.pos.y - trap->left.v1.pos.y;
+	float s2 = trap->right.v2.pos.y - trap->right.v1.pos.y;
+	float t1 = (y - trap->left.v1.pos.y) / s1;
+	float t2 = (y - trap->right.v1.pos.y) / s2;
+	vertex_interp(&trap->left.v, &trap->left.v1, &trap->left.v2, t1);
+	vertex_interp(&trap->right.v, &trap->right.v1, &trap->right.v2, t2);
 }
 
-void trapezoid_init_scan_line(const trapezoid_t *trape, scanline_t *scanline, int y) {
-	float width = trape->right.v.pos.x - trape->left.v.pos.x;
-	scanline->x = (int)(trape->left.v.pos.x + 0.5f);
-	scanline->w = (int)(trape->right.v.pos.x + 0.5f) - scanline->x;
+// 根据左右两边的端点，初始化计算出扫描线的起点和步长
+void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y) {
+	float width = trap->right.v.pos.x - trap->left.v.pos.x;
+	scanline->x = (int)(trap->left.v.pos.x + 0.5f);
+	scanline->w = (int)(trap->right.v.pos.x + 0.5f) - scanline->x;
 	scanline->y = y;
-	scanline->v = trape->left.v;
-	if (trape->left.v.pos.x >= trape->right.v.pos.x) scanline->w = 0;
-	vertex_division(&scanline->step, &trape->left.v, &trape->right.v, width);
+	scanline->v = trap->left.v;
+	if (trap->left.v.pos.x >= trap->right.v.pos.x) scanline->w = 0;
+	vertex_division(&scanline->step, &trap->left.v, &trap->right.v, width);
 }
 
 
@@ -650,15 +648,15 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
 }
 
 // 主渲染函数
-void device_render_trape(device_t *device, trapezoid_t *trape) {
+void device_render_trap(device_t *device, trapezoid_t *trap) {
 	scanline_t scanline;
 	int j, top, bottom;
-	top = (int)(trape->top + 0.5f);
-	bottom = (int)(trape->bottom + 0.5f);
+	top = (int)(trap->top + 0.5f);
+	bottom = (int)(trap->bottom + 0.5f);
 	for (j = top; j < bottom; j++) {
 		if (j >= 0 && j < device->height) {
-			trapezoid_edge_interp(trape, (float)j + 0.5f);
-			trapezoid_init_scan_line(trape, &scanline, j);
+			trapezoid_edge_interp(trap, (float)j + 0.5f);
+			trapezoid_init_scan_line(trap, &scanline, j);
 			device_draw_scanline(device, &scanline);
 		}
 		if (j >= device->height) break;
@@ -689,8 +687,10 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 
 	// 纹理或者色彩绘制
 	if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
-		trapezoid_t trape1, trape2;
-		vertex_t t1 = *v1, t2 = *v2, t3 = *v3, t;
+		vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
+		trapezoid_t traps[2];
+		int n;
+
 		t1.pos = p1; 
 		t2.pos = p2;
 		t3.pos = p3;
@@ -701,29 +701,12 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 		vertex_rhw_init(&t1);	// 初始化 w
 		vertex_rhw_init(&t2);	// 初始化 w
 		vertex_rhw_init(&t3);	// 初始化 w
-
-		// 三角形排序，从上到下 t1, t2, t3
-		if (t1.pos.y > t2.pos.y) t = t1, t1 = t2, t2 = t;
-		if (t1.pos.y > t3.pos.y) t = t1, t1 = t3, t3 = t;
-		if (t2.pos.y > t3.pos.y) t = t2, t2 = t3, t3 = t;
 		
-		if (t1.pos.y == t2.pos.y && t1.pos.y == t3.pos.y) {	// 调过 0高度
-			return;
-		}
+		// 拆分三角形为0-2个梯形，并且返回可用梯形数量
+		n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
 
-		if (t1.pos.y == t2.pos.y) {		// t1 在上，t2, t3 在一条水平线上
-			trapezoid_init_edge_down(&trape1, &t1, &t2, &t3);
-			device_render_trape(device, &trape1);	// 渲染梯形
-		}
-		else if (t2.pos.y == t3.pos.y) {	// t1, t2同水平线，t3在下
-			trapezoid_init_edge_up(&trape2, &t1, &t2, &t3);
-			device_render_trape(device, &trape2);	// 渲染梯形
-		}
-		else {		// t1上，t2中，t3下，计算一个中点 t 使得分成上下两三角形
-			trapezoid_init_edges(&trape1, &trape2, &t1, &t2, &t3);
-			device_render_trape(device, &trape1);	// 渲染上部分梯形
-			device_render_trape(device, &trape2);	// 渲染下部分梯形
-		}
+		if (n >= 1) device_render_trap(device, &traps[0]);
+		if (n >= 2) device_render_trap(device, &traps[1]);
 	}
 
 	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
