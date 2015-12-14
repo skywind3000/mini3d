@@ -55,3 +55,10 @@
 * 载入 BSP 场景并实现漫游
 
 
+欢迎捐赠
+=======
+
+![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/donation.png)
+
+您的捐助是对该教程的最大肯定，欢迎使用支付宝手扫描上面的二维码，进行捐赠。捐赠款项将用于完善教程文档和图例，以及激励我写出更多有意思的教程来。
+
