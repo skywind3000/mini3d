@@ -62,3 +62,10 @@
 
 您的捐助是对该教程的最大肯定，欢迎使用支付宝手扫描上面的二维码，进行捐赠。捐赠款项将用于完善教程文档和图例，以及帮助我写出更多有意思的教程来。
 
+
+
+欢迎关注
+
+blog: http://www.skywind.me
+
+zhihu: https://www.zhihu.com/people/skywind3000 
