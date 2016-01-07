@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include <windows.h>
+#include <tchar.h>
 
 typedef unsigned int IUINT32;
 
@@ -710,9 +711,9 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 	}
 
 	if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
-		device_draw_line(device, p1.x, p1.y, p2.x, p2.y, device->foreground);
-		device_draw_line(device, p1.x, p1.y, p3.x, p3.y, device->foreground);
-		device_draw_line(device, p3.x, p3.y, p2.x, p2.y, device->foreground);
+		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);
+		device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
+		device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
 	}
 }
 
@@ -730,7 +731,7 @@ static HBITMAP screen_ob = NULL;		// 老的 BITMAP
 unsigned char *screen_fb = NULL;		// frame buffer
 long screen_pitch = 0;
 
-int screen_init(int w, int h, const char *title);	// 屏幕初始化
+int screen_init(int w, int h, const TCHAR *title);	// 屏幕初始化
 int screen_close(void);								// 关闭屏幕
 void screen_dispatch(void);							// 处理消息
 void screen_update(void);							// 显示 FrameBuffer
@@ -744,9 +745,9 @@ static LRESULT screen_events(HWND, UINT, WPARAM, LPARAM);
 #endif
 
 // 初始化窗口并设置标题
-int screen_init(int w, int h, const char *title) {
-	WNDCLASSA wc = { CS_BYTEALIGNCLIENT, (WNDPROC)screen_events, 0, 0, 0, 
-		NULL, NULL, NULL, NULL, "SCREEN3.1415926" };
+int screen_init(int w, int h, const TCHAR *title) {
+	WNDCLASS wc = { CS_BYTEALIGNCLIENT, (WNDPROC)screen_events, 0, 0, 0, 
+		NULL, NULL, NULL, NULL, _T("SCREEN3.1415926") };
 	BITMAPINFO bi = { { sizeof(BITMAPINFOHEADER), w, -h, 1, 32, BI_RGB, 
 		w * h * 4, 0, 0, 0, 0 }  };
 	RECT rect = { 0, 0, w, h };
@@ -759,9 +760,9 @@ int screen_init(int w, int h, const char *title) {
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wc.hInstance = GetModuleHandle(NULL);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	if (!RegisterClassA(&wc)) return -1;
+	if (!RegisterClass(&wc)) return -1;
 
-	screen_handle = CreateWindowA("SCREEN3.1415926", title, 
+	screen_handle = CreateWindow(_T("SCREEN3.1415926"), title,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
 	if (screen_handle == NULL) return -2;
@@ -850,14 +851,14 @@ void screen_update(void) {
 // 主程序
 //=====================================================================
 vertex_t mesh[8] = {
-	{ {  1, -1,  1, 1 }, { 0, 0 }, { 1.0, 0.2, 0.2 }, 1 },
-	{ { -1, -1,  1, 1 }, { 0, 1 }, { 0.2, 1.0, 0.2 }, 1 },
-	{ { -1,  1,  1, 1 }, { 1, 1 }, { 0.2, 0.2, 1.0 }, 1 },
-	{ {  1,  1,  1, 1 }, { 1, 0 }, { 1.0, 0.2, 1.0 }, 1 },
-	{ {  1, -1, -1, 1 }, { 0, 0 }, { 1.0, 1.0, 0.2 }, 1 },
-	{ { -1, -1, -1, 1 }, { 0, 1 }, { 0.2, 1.0, 1.0 }, 1 },
-	{ { -1,  1, -1, 1 }, { 1, 1 }, { 1.0, 0.3, 0.3 }, 1 },
-	{ {  1,  1, -1, 1 }, { 1, 0 }, { 0.2, 1.0, 0.3 }, 1 },
+	{ {  1, -1,  1, 1 }, { 0, 0 }, { 1.0f, 0.2f, 0.2f }, 1 },
+	{ { -1, -1,  1, 1 }, { 0, 1 }, { 0.2f, 1.0f, 0.2f }, 1 },
+	{ { -1,  1,  1, 1 }, { 1, 1 }, { 0.2f, 0.2f, 1.0f }, 1 },
+	{ {  1,  1,  1, 1 }, { 1, 0 }, { 1.0f, 0.2f, 1.0f }, 1 },
+	{ {  1, -1, -1, 1 }, { 0, 0 }, { 1.0f, 1.0f, 0.2f }, 1 },
+	{ { -1, -1, -1, 1 }, { 0, 1 }, { 0.2f, 1.0f, 1.0f }, 1 },
+	{ { -1,  1, -1, 1 }, { 1, 1 }, { 1.0f, 0.3f, 0.3f }, 1 },
+	{ {  1,  1, -1, 1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
 };
 
 void draw_plane(device_t *device, int a, int b, int c, int d) {
@@ -908,8 +909,8 @@ int main(void)
 	float alpha = 1;
 	float pos = 3.5;
 
-	char *title = "Mini3d (software render tutorial) - "
-		"Left/Right: rotation, Up/Down: forward/backward, Space: switch state";
+	TCHAR *title = _T("Mini3d (software render tutorial) - ")
+		_T("Left/Right: rotation, Up/Down: forward/backward, Space: switch state");
 
 	if (screen_init(800, 600, title)) 
 		return -1;
