@@ -543,7 +543,7 @@ void device_clear(device_t *device, int mode) {
 
 // 画点
 void device_pixel(device_t *device, int x, int y, IUINT32 color) {
-	if (((IUINT32)x) <= (IUINT32)device->width && ((IUINT32)y) <= (IUINT32)device->height) {
+	if (((IUINT32)x) < (IUINT32)device->width && ((IUINT32)y) < (IUINT32)device->height) {
 		device->framebuffer[y][x] = color;
 	}
 }
