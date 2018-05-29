@@ -21,7 +21,7 @@
 * msvc:
 		cl -O2 -nologo mini3d.c 
 * 已编译版本：
-[http://www.skywind.me/mw/images/c/c8/Mini3d.7z](http://www.skywind.me/mw/images/c/c8/Mini3d.7z "Mini3d.7z")
+[https://github.com/skywind3000/mini3d/releases](https://github.com/skywind3000/mini3d/releases)
 
 演示
 ===
