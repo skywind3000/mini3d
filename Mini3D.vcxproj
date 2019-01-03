@@ -79,6 +79,9 @@
   <ItemGroup>
     <ClCompile Include="mini3d.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vector_t.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

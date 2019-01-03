@@ -3,4 +3,14 @@
   <ItemGroup>
     <ClCompile Include="mini3d.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Classes">
+      <UniqueIdentifier>{d482315b-a1f4-4817-af00-33ecdffc845a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vector_t.h">
+      <Filter>Classes</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
