@@ -30,3 +30,7 @@
 
 # Debug files
 *.dSYM/
+*Debug/
+
+# Visual Studio files
+*.vs/
