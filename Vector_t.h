@@ -79,7 +79,7 @@ public:
 		return *this;
 	}
 
-
+	friend inline float vectorMag(const vector_t &a);
 
 	// 向量标准化
 	void normalize()
@@ -119,7 +119,7 @@ inline vector_t crossProduct(const vector_t &a, const vector_t &b)
 	);
 }
 
-// 标量坐成，重载"*"运算符
+// 标量左乘，重载"*"运算符
 inline vector_t operator*(float k, const vector_t &v)
 {
 	return vector_t(k*v.x, k*v.y, k*v.z);
@@ -131,5 +131,19 @@ inline float distance(const vector_t &a, const vector_t &b)
 	float dx = a.x - b.x;
 	float dy = a.y - b.y;
 	float dz = a.z - a.z;
-	return sqrt(dx*dx + dy * dy + dz * dz);
+	return (float)sqrt(dx*dx + dy * dy + dz * dz);
 }
+
+// 计算插值：t 为 [0, 1] 之间的数值
+float interp(float x1, float x2, float t);
+
+// 向量插值，t取值 [0, 1]
+inline vector_t vectorInterp(const vector_t &a, const vector_t &b, float t)
+{
+	return vector_t(
+		interp(a.x, b.x, t),
+		interp(a.y, b.y, t),
+		interp(a.z, b.z, t)
+	);
+}
+

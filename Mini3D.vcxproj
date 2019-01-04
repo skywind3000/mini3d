@@ -77,10 +77,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="mini3d.c" />
+    <ClCompile Include="mini3d.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Vector_t.h" />
+    <ClInclude Include="vector_t.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
