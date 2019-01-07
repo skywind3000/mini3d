@@ -23,13 +23,14 @@
 #include <tchar.h>
 
 #include "vector_t.h"
+#include "matrix_t.h"
 
 typedef unsigned int IUINT32;
 
 //=====================================================================
 // 数学库：此部分应该不用详解，熟悉 D3D 矩阵变换即可
 //=====================================================================
-typedef struct { float m[4][4]; } matrix_t;
+//typedef struct { float m[4][4]; } matrix_t;
 //typedef struct { float x, y, z, w; } vector_t;
 typedef vector_t point_t;
 
@@ -96,161 +97,161 @@ float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
 // 	}
 // }
 
-// c = a + b
-void matrix_add(matrix_t *c, const matrix_t *a, const matrix_t *b) {
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++)
-            c->m[i][j] = a->m[i][j] + b->m[i][j];
-    }
-}
-
-// c = a - b
-void matrix_sub(matrix_t *c, const matrix_t *a, const matrix_t *b) {
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++)
-            c->m[i][j] = a->m[i][j] - b->m[i][j];
-    }
-}
-
-// c = a * b
-void matrix_mul(matrix_t *c, const matrix_t *a, const matrix_t *b) {
-    matrix_t z;
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            z.m[j][i] = (a->m[j][0] * b->m[0][i]) +
-                (a->m[j][1] * b->m[1][i]) +
-                (a->m[j][2] * b->m[2][i]) +
-                (a->m[j][3] * b->m[3][i]);
-        }
-    }
-    c[0] = z;
-}
-
-// c = a * f
-void matrix_scale(matrix_t *c, const matrix_t *a, float f) {
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++)
-            c->m[i][j] = a->m[i][j] * f;
-    }
-}
-
-// y = x * m
-void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m) {
-    float X = x->x, Y = x->y, Z = x->z, W = x->w;
-    y->x = X * m->m[0][0] + Y * m->m[1][0] + Z * m->m[2][0] + W * m->m[3][0];
-    y->y = X * m->m[0][1] + Y * m->m[1][1] + Z * m->m[2][1] + W * m->m[3][1];
-    y->z = X * m->m[0][2] + Y * m->m[1][2] + Z * m->m[2][2] + W * m->m[3][2];
-    y->w = X * m->m[0][3] + Y * m->m[1][3] + Z * m->m[2][3] + W * m->m[3][3];
-}
-
-void matrix_set_identity(matrix_t *m) {
-    m->m[0][0] = m->m[1][1] = m->m[2][2] = m->m[3][3] = 1.0f;
-    m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
-    m->m[1][0] = m->m[1][2] = m->m[1][3] = 0.0f;
-    m->m[2][0] = m->m[2][1] = m->m[2][3] = 0.0f;
-    m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
-}
-
-void matrix_set_zero(matrix_t *m) {
-    m->m[0][0] = m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
-    m->m[1][0] = m->m[1][1] = m->m[1][2] = m->m[1][3] = 0.0f;
-    m->m[2][0] = m->m[2][1] = m->m[2][2] = m->m[2][3] = 0.0f;
-    m->m[3][0] = m->m[3][1] = m->m[3][2] = m->m[3][3] = 0.0f;
-}
-
-// 平移变换
-void matrix_set_translate(matrix_t *m, float x, float y, float z) {
-    matrix_set_identity(m);
-    m->m[3][0] = x;
-    m->m[3][1] = y;
-    m->m[3][2] = z;
-}
-
-// 缩放变换
-void matrix_set_scale(matrix_t *m, float x, float y, float z) {
-    matrix_set_identity(m);
-    m->m[0][0] = x;
-    m->m[1][1] = y;
-    m->m[2][2] = z;
-}
-
-// 旋转矩阵
-void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
-    float qsin = (float)sin(theta * 0.5f);
-    float qcos = (float)cos(theta * 0.5f);
-    //vector_t vec = { x, y, z, 1.0f };
-    vector_t vec = vector_t(x, y, z);
-
-    float w = qcos;
-    vec.normalize();
-    x = vec.x * qsin;
-    y = vec.y * qsin;
-    z = vec.z * qsin;
-    m->m[0][0] = 1 - 2 * y * y - 2 * z * z;
-    m->m[1][0] = 2 * x * y - 2 * w * z;
-    m->m[2][0] = 2 * x * z + 2 * w * y;
-    m->m[0][1] = 2 * x * y + 2 * w * z;
-    m->m[1][1] = 1 - 2 * x * x - 2 * z * z;
-    m->m[2][1] = 2 * y * z - 2 * w * x;
-    m->m[0][2] = 2 * x * z - 2 * w * y;
-    m->m[1][2] = 2 * y * z + 2 * w * x;
-    m->m[2][2] = 1 - 2 * x * x - 2 * y * y;
-    m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
-    m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
-    m->m[3][3] = 1.0f;
-}
-
-// 设置摄像机
-void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, const vector_t *up) {
-    vector_t xaxis, yaxis, zaxis;
-
-    //vector_sub(&zaxis, at, eye);
-    zaxis = *at - *eye;
-    //vector_normalize(&zaxis);
-    zaxis.normalize();
-    //vector_crossproduct(&xaxis, up, &zaxis);
-    xaxis = crossProduct(*up, zaxis);
-    //vector_normalize(&xaxis);
-    xaxis.normalize();
-    //vector_crossproduct(&yaxis, &zaxis, &xaxis);
-    yaxis = crossProduct(zaxis, xaxis);
-
-    m->m[0][0] = xaxis.x;
-    m->m[1][0] = xaxis.y;
-    m->m[2][0] = xaxis.z;
-    //m->m[3][0] = -vector_dotproduct(&xaxis, eye);
-    m->m[3][0] = -(xaxis * (*eye));
-
-    m->m[0][1] = yaxis.x;
-    m->m[1][1] = yaxis.y;
-    m->m[2][1] = yaxis.z;
-    //m->m[3][1] = -vector_dotproduct(&yaxis, eye);
-    m->m[3][1] = -(yaxis * (*eye));
-
-    m->m[0][2] = zaxis.x;
-    m->m[1][2] = zaxis.y;
-    m->m[2][2] = zaxis.z;
-    //m->m[3][2] = -vector_dotproduct(&zaxis, eye);
-    m->m[3][2] = -(zaxis*(*eye));
-
-    m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
-    m->m[3][3] = 1.0f;
-}
-
-// D3DXMatrixPerspectiveFovLH
-void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
-    float fax = 1.0f / (float)tan(fovy * 0.5f);
-    matrix_set_zero(m);
-    m->m[0][0] = (float)(fax / aspect);
-    m->m[1][1] = (float)(fax);
-    m->m[2][2] = zf / (zf - zn);
-    m->m[3][2] = -zn * zf / (zf - zn);
-    m->m[2][3] = 1;
-}
+//// c = a + b
+//void matrix_add(matrix_t *c, const matrix_t *a, const matrix_t *b) {
+//    int i, j;
+//    for (i = 0; i < 4; i++) {
+//        for (j = 0; j < 4; j++)
+//            c->m[i][j] = a->m[i][j] + b->m[i][j];
+//    }
+//}
+//
+//// c = a - b
+//void matrix_sub(matrix_t *c, const matrix_t *a, const matrix_t *b) {
+//    int i, j;
+//    for (i = 0; i < 4; i++) {
+//        for (j = 0; j < 4; j++)
+//            c->m[i][j] = a->m[i][j] - b->m[i][j];
+//    }
+//}
+//
+//// c = a * b
+//void matrix_mul(matrix_t *c, const matrix_t *a, const matrix_t *b) {
+//    matrix_t z;
+//    int i, j;
+//    for (i = 0; i < 4; i++) {
+//        for (j = 0; j < 4; j++) {
+//            z.m[j][i] = (a->m[j][0] * b->m[0][i]) +
+//                (a->m[j][1] * b->m[1][i]) +
+//                (a->m[j][2] * b->m[2][i]) +
+//                (a->m[j][3] * b->m[3][i]);
+//        }
+//    }
+//    c[0] = z;
+//}
+//
+//// c = a * f
+//void matrix_scale(matrix_t *c, const matrix_t *a, float f) {
+//    int i, j;
+//    for (i = 0; i < 4; i++) {
+//        for (j = 0; j < 4; j++)
+//            c->m[i][j] = a->m[i][j] * f;
+//    }
+//}
+//
+//// y = x * m
+//void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m) {
+//    float X = x->x, Y = x->y, Z = x->z, W = x->w;
+//    y->x = X * m->m[0][0] + Y * m->m[1][0] + Z * m->m[2][0] + W * m->m[3][0];
+//    y->y = X * m->m[0][1] + Y * m->m[1][1] + Z * m->m[2][1] + W * m->m[3][1];
+//    y->z = X * m->m[0][2] + Y * m->m[1][2] + Z * m->m[2][2] + W * m->m[3][2];
+//    y->w = X * m->m[0][3] + Y * m->m[1][3] + Z * m->m[2][3] + W * m->m[3][3];
+//}
+//
+//void matrix_set_identity(matrix_t *m) {
+//    m->m[0][0] = m->m[1][1] = m->m[2][2] = m->m[3][3] = 1.0f;
+//    m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
+//    m->m[1][0] = m->m[1][2] = m->m[1][3] = 0.0f;
+//    m->m[2][0] = m->m[2][1] = m->m[2][3] = 0.0f;
+//    m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
+//}
+//
+//void matrix_set_zero(matrix_t *m) {
+//    m->m[0][0] = m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
+//    m->m[1][0] = m->m[1][1] = m->m[1][2] = m->m[1][3] = 0.0f;
+//    m->m[2][0] = m->m[2][1] = m->m[2][2] = m->m[2][3] = 0.0f;
+//    m->m[3][0] = m->m[3][1] = m->m[3][2] = m->m[3][3] = 0.0f;
+//}
+//
+//// 平移变换
+//void matrix_set_translate(matrix_t *m, float x, float y, float z) {
+//    matrix_set_identity(m);
+//    m->m[3][0] = x;
+//    m->m[3][1] = y;
+//    m->m[3][2] = z;
+//}
+//
+//// 缩放变换
+//void matrix_set_scale(matrix_t *m, float x, float y, float z) {
+//    matrix_set_identity(m);
+//    m->m[0][0] = x;
+//    m->m[1][1] = y;
+//    m->m[2][2] = z;
+//}
+//
+//// 旋转矩阵
+//void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
+//    float qsin = (float)sin(theta * 0.5f);
+//    float qcos = (float)cos(theta * 0.5f);
+//    //vector_t vec = { x, y, z, 1.0f };
+//    vector_t vec = vector_t(x, y, z);
+//
+//    float w = qcos;
+//    vec.normalize();
+//    x = vec.x * qsin;
+//    y = vec.y * qsin;
+//    z = vec.z * qsin;
+//    m->m[0][0] = 1 - 2 * y * y - 2 * z * z;
+//    m->m[1][0] = 2 * x * y - 2 * w * z;
+//    m->m[2][0] = 2 * x * z + 2 * w * y;
+//    m->m[0][1] = 2 * x * y + 2 * w * z;
+//    m->m[1][1] = 1 - 2 * x * x - 2 * z * z;
+//    m->m[2][1] = 2 * y * z - 2 * w * x;
+//    m->m[0][2] = 2 * x * z - 2 * w * y;
+//    m->m[1][2] = 2 * y * z + 2 * w * x;
+//    m->m[2][2] = 1 - 2 * x * x - 2 * y * y;
+//    m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
+//    m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
+//    m->m[3][3] = 1.0f;
+//}
+//
+//// 设置摄像机
+//void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, const vector_t *up) {
+//    vector_t xaxis, yaxis, zaxis;
+//
+//    //vector_sub(&zaxis, at, eye);
+//    zaxis = *at - *eye;
+//    //vector_normalize(&zaxis);
+//    zaxis.normalize();
+//    //vector_crossproduct(&xaxis, up, &zaxis);
+//    xaxis = crossProduct(*up, zaxis);
+//    //vector_normalize(&xaxis);
+//    xaxis.normalize();
+//    //vector_crossproduct(&yaxis, &zaxis, &xaxis);
+//    yaxis = crossProduct(zaxis, xaxis);
+//
+//    m->m[0][0] = xaxis.x;
+//    m->m[1][0] = xaxis.y;
+//    m->m[2][0] = xaxis.z;
+//    //m->m[3][0] = -vector_dotproduct(&xaxis, eye);
+//    m->m[3][0] = -(xaxis * (*eye));
+//
+//    m->m[0][1] = yaxis.x;
+//    m->m[1][1] = yaxis.y;
+//    m->m[2][1] = yaxis.z;
+//    //m->m[3][1] = -vector_dotproduct(&yaxis, eye);
+//    m->m[3][1] = -(yaxis * (*eye));
+//
+//    m->m[0][2] = zaxis.x;
+//    m->m[1][2] = zaxis.y;
+//    m->m[2][2] = zaxis.z;
+//    //m->m[3][2] = -vector_dotproduct(&zaxis, eye);
+//    m->m[3][2] = -(zaxis*(*eye));
+//
+//    m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
+//    m->m[3][3] = 1.0f;
+//}
+//
+//// D3DXMatrixPerspectiveFovLH
+//void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
+//    float fax = 1.0f / (float)tan(fovy * 0.5f);
+//    matrix_set_zero(m);
+//    m->m[0][0] = (float)(fax / aspect);
+//    m->m[1][1] = (float)(fax);
+//    m->m[2][2] = zf / (zf - zn);
+//    m->m[3][2] = -zn * zf / (zf - zn);
+//    m->m[2][3] = 1;
+//}
 
 
 //=====================================================================
@@ -268,16 +269,21 @@ typedef struct {
 // 矩阵更新，计算 transform = world * view * projection
 void transform_update(transform_t *ts) {
     matrix_t m;
-    matrix_mul(&m, &ts->world, &ts->view);
-    matrix_mul(&ts->transform, &m, &ts->projection);
+    //matrix_mul(&m, &ts->world, &ts->view);
+    m = ts->world * ts->view;
+    //matrix_mul(&ts->transform, &m, &ts->projection);
+    ts->transform = m * ts->projection;
 }
 
 // 初始化，设置屏幕长宽
 void transform_init(transform_t *ts, int width, int height) {
     float aspect = (float)width / ((float)height);
-    matrix_set_identity(&ts->world);
-    matrix_set_identity(&ts->view);
-    matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, 500.0f);
+    //matrix_set_identity(&ts->world);
+    ts->world.setIdentity();
+    //matrix_set_identity(&ts->view);
+    ts->view.setIdentity();
+    //matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, 500.0f);
+    ts->projection = perspective(3.1415926f*0.5f, aspect, 1.0f, 500.0f);
     ts->w = (float)width;
     ts->h = (float)height;
     transform_update(ts);
@@ -285,7 +291,8 @@ void transform_init(transform_t *ts, int width, int height) {
 
 // 将矢量 x 进行 project 
 void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
-    matrix_apply(y, x, &ts->transform);
+    //matrix_apply(y, x, &ts->transform);
+    *y = *x * ts->transform;
 }
 
 // 检查齐次坐标同 cvv 的边界用于视锥裁剪
@@ -889,7 +896,8 @@ void draw_plane(device_t *device, int a, int b, int c, int d) {
 
 void draw_box(device_t *device, float theta) {
     matrix_t m;
-    matrix_set_rotate(&m, -1, -0.5, 1, theta);
+    //matrix_set_rotate(&m, -1, -0.5, 1, theta);
+    m.setRotate(-1.0f, -0.5f, 1.0f, theta);
     device->transform.world = m;
     transform_update(&device->transform);
     draw_plane(device, 0, 1, 2, 3);
@@ -903,7 +911,8 @@ void draw_box(device_t *device, float theta) {
 void camera_at_zero(device_t *device, float x, float y, float z) {
     //point_t eye = { x, y, z, 1 }, at = { 0, 0, 0, 1 }, up = { 0, 0, 1, 1 };
     point_t eye = point_t(x, y, z), at = point_t(0, 0, 0), up = point_t(0, 0, 1);
-    matrix_set_lookat(&device->transform.view, &eye, &at, &up);
+    //matrix_set_lookat(&device->transform.view, &eye, &at, &up);
+    device->transform.view = lookAt(eye, at, up);
     transform_update(&device->transform);
 }
 

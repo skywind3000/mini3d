@@ -3,8 +3,6 @@
 
 #include <math.h>
 
-#include "matrix_t.h"
-
 class vector_t
 {
 public:
@@ -52,17 +50,6 @@ public:
     vector_t operator*(float a)const
     {
         return vector_t(x*a, y*a, z*a);
-    }
-
-    // 向量与矩阵相乘，重载"*"运算符
-    vector_t operator*(const matrix_t &m) const
-    {
-        vector_t v;
-        v.x = x * m.m[0][0] + y * m.m[1][0] + z * m.m[2][0] + w * m.m[3][0];
-        v.y = x * m.m[0][1] + y * m.m[1][1] + z * m.m[2][1] + w * m.m[3][1];
-        v.z = x * m.m[0][2] + y * m.m[1][2] + z * m.m[2][2] + w * m.m[3][2];
-        v.w = x * m.m[0][3] + y * m.m[1][3] + z * m.m[2][3] + w * m.m[3][3];
-        return v;
     }
 
     vector_t operator/(float a)const
