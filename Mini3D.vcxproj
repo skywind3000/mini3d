@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="matrix_t.h" />
+    <ClInclude Include="tools.h" />
     <ClInclude Include="vector_t.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

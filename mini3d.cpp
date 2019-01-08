@@ -24,6 +24,7 @@
 
 #include "vector_t.h"
 #include "matrix_t.h"
+#include "tools.h"
 
 typedef unsigned int IUINT32;
 
@@ -711,34 +712,42 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
     transform_homogenize(&device->transform, &p2, &c2);
     transform_homogenize(&device->transform, &p3, &c3);
 
-    // 纹理或者色彩绘制
-    if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
-        vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
-        trapezoid_t traps[2];
-        int n;
+    // 剔除检测
+    bool backfaceCull;
+    backfaceCull = cullface(p1, p2, p3);
+    //backfaceCull = false;
 
-        t1.pos = p1;
-        t2.pos = p2;
-        t3.pos = p3;
-        t1.pos.w = c1.w;
-        t2.pos.w = c2.w;
-        t3.pos.w = c3.w;
+    if (!backfaceCull)
+    {
+        // 纹理或者色彩绘制
+        if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
+            vertex_t t1 = *v1, t2 = *v2, t3 = *v3;
+            trapezoid_t traps[2];
+            int n;
 
-        vertex_rhw_init(&t1);	// 初始化 w
-        vertex_rhw_init(&t2);	// 初始化 w
-        vertex_rhw_init(&t3);	// 初始化 w
+            t1.pos = p1;
+            t2.pos = p2;
+            t3.pos = p3;
+            t1.pos.w = c1.w;
+            t2.pos.w = c2.w;
+            t3.pos.w = c3.w;
 
-        // 拆分三角形为0-2个梯形，并且返回可用梯形数量
-        n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
+            vertex_rhw_init(&t1);	// 初始化 w
+            vertex_rhw_init(&t2);	// 初始化 w
+            vertex_rhw_init(&t3);	// 初始化 w
 
-        if (n >= 1) device_render_trap(device, &traps[0]);
-        if (n >= 2) device_render_trap(device, &traps[1]);
-    }
+            // 拆分三角形为0-2个梯形，并且返回可用梯形数量
+            n = trapezoid_init_triangle(traps, &t1, &t2, &t3);
 
-    if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
-        device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);
-        device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
-        device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
+            if (n >= 1) device_render_trap(device, &traps[0]);
+            if (n >= 2) device_render_trap(device, &traps[1]);
+        }
+
+        if (render_state & RENDER_STATE_WIREFRAME) {		// 线框绘制
+            device_draw_line(device, (int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, device->foreground);
+            device_draw_line(device, (int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, device->foreground);
+            device_draw_line(device, (int)p3.x, (int)p3.y, (int)p2.x, (int)p2.y, device->foreground);
+        }
     }
 }
 
@@ -901,7 +910,8 @@ void draw_box(device_t *device, float theta) {
     device->transform.world = m;
     transform_update(&device->transform);
     draw_plane(device, 0, 1, 2, 3);
-    draw_plane(device, 4, 5, 6, 7);
+    //draw_plane(device, 4, 5, 6, 7); //顺时针绕序修正
+    draw_plane(device, 5, 4, 7, 6);
     draw_plane(device, 0, 4, 5, 1);
     draw_plane(device, 1, 5, 6, 2);
     draw_plane(device, 2, 6, 7, 3);
