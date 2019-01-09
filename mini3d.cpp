@@ -268,11 +268,11 @@ typedef struct {
 
 // 矩阵更新，计算 transform = world * view * projection
 void transform_update(transform_t *ts) {
-    matrix_t m;
+    //matrix_t m;
     //matrix_mul(&m, &ts->world, &ts->view);
-    m = ts->world * ts->view;
+    //m = ts->world * ts->view;
     //matrix_mul(&ts->transform, &m, &ts->projection);
-    ts->transform = m * ts->projection;
+    ts->transform = ts->world * ts->view * ts->projection;
 }
 
 // 初始化，设置屏幕长宽
@@ -328,6 +328,13 @@ typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_
 typedef struct { vertex_t v, v1, v2; } edge_t;
 typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
 typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
+
+void color_modulated(color_t *y, const color_t *x1, const color_t *x2)
+{
+    y->r = x1->r*x2->r;
+    y->g = x1->g*x2->g;
+    y->b = x1->b*x2->b;
+}
 
 
 void vertex_rhw_init(vertex_t *v) {
@@ -466,6 +473,12 @@ void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int
 }
 
 
+
+//=====================================================================
+// 简单光照-平行光
+//=====================================================================
+typedef struct { float ambiStrength, diffStrength; color_t lightColor; vector_t direction; }light_t;
+
 //=====================================================================
 // 渲染设备
 //=====================================================================
@@ -484,6 +497,7 @@ typedef struct {
     int cull_mode;              // 剔除模式
     IUINT32 background;         // 背景颜色
     IUINT32 foreground;         // 线框颜色
+    light_t light;              // 光源
 }	device_t;
 
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
@@ -491,8 +505,8 @@ typedef struct {
 #define RENDER_STATE_COLOR          4		// 渲染颜色
 
 #define CULL_MODE_NONE              1       // 禁止剔除
-#define CULL_MODE_CW                2       // 正面剔除
-#define CULL_MODE_CCW               3       // 背面剔除
+#define CULL_MODE_FRONT             2       // 正面剔除
+#define CULL_MODE_BACK              4       // 背面剔除
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -669,7 +683,24 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
                     float u = scanline->v.tc.u * w;
                     float v = scanline->v.tc.v * w;
                     IUINT32 cc = device_texture_read(device, u, v);
-                    framebuffer[x] = cc;
+                    color_t pixel;
+                    pixel.r = (float)((cc & 0x00ff0000)>>16);
+                    pixel.g = (float)((cc & 0x0000ff00)>>8);
+                    pixel.b = (float)(cc & 0x000000ff);
+                    color_t lightcolor;
+                    device->light.ambiStrength = 0;
+                    device->light.diffStrength = 1;
+                    lightcolor.r = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.r;
+                    lightcolor.g = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.g;
+                    lightcolor.b = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.b;
+
+                    color_modulated(&pixel, &pixel, &lightcolor);
+                    int R = (int)(pixel.r);
+                    int G = (int)(pixel.g);
+                    int B = (int)(pixel.b);
+                    framebuffer[x] = (R << 16) | (G << 8) | (B);
+
+                    //framebuffer[x] = cc;
                 }
             }
         }
@@ -703,18 +734,18 @@ bool device_cullface(const device_t *device, const point_t *p1, const point_t *p
     normal = crossProduct(v1, v2);
     normal.normalize();
 
-    vector_t viewDirection(0.0f, 0.0f, 1.0f);
+    vector_t viewDirection(0.0f, 0.0f, -1.0f);
 
     switch (cull_mode)
     {
     case CULL_MODE_NONE:
         return false;
-    case CULL_MODE_CW:
+    case CULL_MODE_FRONT:
         if (normal*viewDirection >= 0.0f)
             return false;
         else
             return true;
-    case CULL_MODE_CCW:
+    case CULL_MODE_BACK:
         if (normal*viewDirection >= 0.0f)
             return true;
         else
@@ -723,6 +754,22 @@ bool device_cullface(const device_t *device, const point_t *p1, const point_t *p
         return false;
     }
 }
+
+void device_compute_diff(device_t *device, const point_t *p1, const point_t *p2, const point_t *p3)
+{
+    vector_t lightdir = device->light.direction;
+    lightdir.normalize();
+    vector_t v1, v2, normal;
+    v1 = *p2 - *p1;
+    v2 = *p3 - *p1;
+    normal = crossProduct(v1, v2);
+    normal.normalize();
+
+    float diffStrength = (normal * lightdir) < 0 ? 0 : (normal * lightdir);
+
+    device->light.diffStrength = diffStrength;
+}
+
 
 // 根据 render_state 绘制原始三角形
 void device_draw_primitive(device_t *device, const vertex_t *v1,
@@ -764,6 +811,9 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
             t1.pos.w = c1.w;
             t2.pos.w = c2.w;
             t3.pos.w = c3.w;
+
+            device_compute_diff(device, &c1, &c2, &c3);
+
 
             vertex_rhw_init(&t1);	// 初始化 w
             vertex_rhw_init(&t2);	// 初始化 w
@@ -919,14 +969,14 @@ void screen_update(void) {
 // 主程序
 //=====================================================================
 vertex_t mesh[8] = {
-    { {  1, -1,  1 }, { 0, 0 }, { 1.0f, 0.2f, 0.2f }, 1 },
-    { { -1, -1,  1 }, { 0, 1 }, { 0.2f, 1.0f, 0.2f }, 1 },
-    { { -1,  1,  1 }, { 1, 1 }, { 0.2f, 0.2f, 1.0f }, 1 },
-    { {  1,  1,  1 }, { 1, 0 }, { 1.0f, 0.2f, 1.0f }, 1 },
-    { {  1, -1, -1 }, { 0, 0 }, { 1.0f, 1.0f, 0.2f }, 1 },
-    { { -1, -1, -1 }, { 0, 1 }, { 0.2f, 1.0f, 1.0f }, 1 },
-    { { -1,  1, -1 }, { 1, 1 }, { 1.0f, 0.3f, 0.3f }, 1 },
-    { {  1,  1, -1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
+    { { -1, -1,  1 }, { 0, 0 }, { 1.0f, 0.2f, 0.2f }, 1 },
+    { {  1, -1,  1 }, { 0, 1 }, { 0.2f, 1.0f, 0.2f }, 1 },
+    { {  1,  1,  1 }, { 1, 1 }, { 0.2f, 0.2f, 1.0f }, 1 },
+    { { -1,  1,  1 }, { 1, 0 }, { 1.0f, 0.2f, 1.0f }, 1 },
+    { { -1, -1, -1 }, { 0, 0 }, { 1.0f, 1.0f, 0.2f }, 1 },
+    { {  1, -1, -1 }, { 0, 1 }, { 0.2f, 1.0f, 1.0f }, 1 },
+    { {  1,  1, -1 }, { 1, 1 }, { 1.0f, 0.3f, 0.3f }, 1 },
+    { { -1,  1, -1 }, { 1, 0 }, { 0.2f, 1.0f, 0.3f }, 1 },
 };
 
 void draw_plane(device_t *device, int a, int b, int c, int d) {
@@ -945,7 +995,7 @@ void draw_box(device_t *device, float theta) {
     transform_update(&device->transform);
     draw_plane(device, 0, 1, 2, 3);
     //draw_plane(device, 4, 5, 6, 7); //顺时针绕序修正
-    draw_plane(device, 5, 4, 7, 6);
+    draw_plane(device, 7, 6, 5, 4);
     draw_plane(device, 0, 4, 5, 1);
     draw_plane(device, 1, 5, 6, 2);
     draw_plane(device, 2, 6, 7, 3);
@@ -976,7 +1026,7 @@ int main(void)
 {
     device_t device;
     int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
-    int mode[] = { CULL_MODE_NONE,CULL_MODE_CW,CULL_MODE_CCW };
+    int mode[] = { CULL_MODE_NONE,CULL_MODE_FRONT,CULL_MODE_BACK };
     int indicator = 0;
     int kbhit = 0;
     float alpha = 1;
@@ -994,7 +1044,13 @@ int main(void)
     init_texture(&device);
     device.render_state = RENDER_STATE_TEXTURE;
     
-    device.cull_mode = CULL_MODE_CCW;
+    device.cull_mode = CULL_MODE_BACK;
+    //device.cull_mode = CULL_MODE_NONE;
+    device.cull_mode = CULL_MODE_FRONT;
+
+    device.light.ambiStrength = 0.1f;
+    device.light.lightColor = { 1.0f,1.0f,1.0f };
+    device.light.direction = { 0.0f,0.0f,-1.0f };
 
     while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
         screen_dispatch();
