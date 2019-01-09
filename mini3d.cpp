@@ -24,7 +24,6 @@
 
 #include "vector_t.h"
 #include "matrix_t.h"
-#include "tools.h"
 
 typedef unsigned int IUINT32;
 
@@ -482,6 +481,7 @@ typedef struct {
     float max_u;                // 纹理最大宽度：tex_width - 1
     float max_v;                // 纹理最大高度：tex_height - 1
     int render_state;           // 渲染状态
+    int cull_mode;              // 剔除模式
     IUINT32 background;         // 背景颜色
     IUINT32 foreground;         // 线框颜色
 }	device_t;
@@ -489,6 +489,10 @@ typedef struct {
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 #define RENDER_STATE_TEXTURE        2		// 渲染纹理
 #define RENDER_STATE_COLOR          4		// 渲染颜色
+
+#define CULL_MODE_NONE              1       // 禁止剔除
+#define CULL_MODE_CW                2       // 正面剔除
+#define CULL_MODE_CCW               3       // 背面剔除
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -690,6 +694,36 @@ void device_render_trap(device_t *device, trapezoid_t *trap) {
     }
 }
 
+bool device_cullface(const device_t *device, const point_t *p1, const point_t *p2, const point_t *p3)
+{
+    int cull_mode = device->cull_mode;
+    vector_t v1, v2, normal;
+    v1 = *p2 - *p1;
+    v2 = *p3 - *p1;
+    normal = crossProduct(v1, v2);
+    normal.normalize();
+
+    vector_t viewDirection(0.0f, 0.0f, 1.0f);
+
+    switch (cull_mode)
+    {
+    case CULL_MODE_NONE:
+        return false;
+    case CULL_MODE_CW:
+        if (normal*viewDirection >= 0.0f)
+            return false;
+        else
+            return true;
+    case CULL_MODE_CCW:
+        if (normal*viewDirection >= 0.0f)
+            return true;
+        else
+            return false;
+    default:
+        return false;
+    }
+}
+
 // 根据 render_state 绘制原始三角形
 void device_draw_primitive(device_t *device, const vertex_t *v1,
     const vertex_t *v2, const vertex_t *v3) {
@@ -713,11 +747,10 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
     transform_homogenize(&device->transform, &p3, &c3);
 
     // 剔除检测
-    bool backfaceCull;
-    backfaceCull = cullface(p1, p2, p3);
-    //backfaceCull = false;
+    bool faceCull;
+    faceCull = device_cullface(device, &p1, &p2, &p3);
 
-    if (!backfaceCull)
+    if (!faceCull)
     {
         // 纹理或者色彩绘制
         if (render_state & (RENDER_STATE_TEXTURE | RENDER_STATE_COLOR)) {
@@ -750,6 +783,7 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
         }
     }
 }
+
 
 
 //=====================================================================
@@ -942,6 +976,7 @@ int main(void)
 {
     device_t device;
     int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
+    int mode[] = { CULL_MODE_NONE,CULL_MODE_CW,CULL_MODE_CCW };
     int indicator = 0;
     int kbhit = 0;
     float alpha = 1;
@@ -958,6 +993,8 @@ int main(void)
 
     init_texture(&device);
     device.render_state = RENDER_STATE_TEXTURE;
+    
+    device.cull_mode = CULL_MODE_CCW;
 
     while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
         screen_dispatch();
