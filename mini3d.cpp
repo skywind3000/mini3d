@@ -688,11 +688,13 @@ void device_draw_scanline(device_t *device, scanline_t *scanline) {
                     pixel.g = (float)((cc & 0x0000ff00)>>8);
                     pixel.b = (float)(cc & 0x000000ff);
                     color_t lightcolor;
-                    device->light.ambiStrength = 0;
-                    device->light.diffStrength = 1;
+                    device->light.ambiStrength = 0.1f;
                     lightcolor.r = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.r;
                     lightcolor.g = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.g;
                     lightcolor.b = (device->light.ambiStrength + device->light.diffStrength)*device->light.lightColor.b;
+                    lightcolor.r = lightcolor.r > 1.0f ? 1.0f : lightcolor.r;
+                    lightcolor.g = lightcolor.g > 1.0f ? 1.0f : lightcolor.g;
+                    lightcolor.b = lightcolor.b > 1.0f ? 1.0f : lightcolor.b;
 
                     color_modulated(&pixel, &pixel, &lightcolor);
                     int R = (int)(pixel.r);
@@ -1046,7 +1048,7 @@ int main(void)
     
     device.cull_mode = CULL_MODE_BACK;
     //device.cull_mode = CULL_MODE_NONE;
-    device.cull_mode = CULL_MODE_FRONT;
+    //device.cull_mode = CULL_MODE_FRONT;
 
     device.light.ambiStrength = 0.1f;
     device.light.lightColor = { 1.0f,1.0f,1.0f };
