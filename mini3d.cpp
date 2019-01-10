@@ -759,8 +759,9 @@ bool device_cullface(const device_t *device, const point_t *p1, const point_t *p
 
 void device_compute_diff(device_t *device, const point_t *p1, const point_t *p2, const point_t *p3)
 {
-    vector_t lightdir = device->light.direction;
+    vector_t lightdir = -device->light.direction;
     lightdir.normalize();
+    
     vector_t v1, v2, normal;
     v1 = *p2 - *p1;
     v2 = *p3 - *p1;
@@ -1052,7 +1053,7 @@ int main(void)
 
     device.light.ambiStrength = 0.1f;
     device.light.lightColor = { 1.0f,1.0f,1.0f };
-    device.light.direction = { 0.0f,0.0f,-1.0f };
+    device.light.direction = { 1.0f,-1.0f,0.0f };
 
     while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
         screen_dispatch();
