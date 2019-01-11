@@ -1,5 +1,5 @@
-﻿#ifndef _MATRIX_T_H_
-#define _MATRIX_T_H_
+﻿#ifndef MATRIX_T_H
+#define MATRIX_T_H
 
 #include "vector_t.h"
 
@@ -7,19 +7,9 @@ class matrix_t
 {
 public:
     //float **m;
-    float m[4][4];
-    void initialize()
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                m[i][j] = 0.0f;
-            }
-        }
-    }
+    float m[4][4] = { 0.0f };
 
-    matrix_t() { initialize(); }
+    matrix_t() {}
     matrix_t(const matrix_t &a)
     {
         for (int i = 0; i < 4; i++)
@@ -124,7 +114,13 @@ public:
     // 设为零矩阵
     void setZero()
     {
-        initialize();
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                m[i][j] = 0.0f;
+            }
+        }
     }
 
     // 平移变换
@@ -234,4 +230,4 @@ matrix_t perspective(float fovy, float aspect, float zn, float zf)
     return m;
 }
 
-#endif // !_MATRIX_T_H_
+#endif // !MATRIX_T_H

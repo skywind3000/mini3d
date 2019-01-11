@@ -24,6 +24,7 @@
 
 #include "vector_t.h"
 #include "matrix_t.h"
+#include "transform_t.h"
 
 typedef unsigned int IUINT32;
 
@@ -254,68 +255,68 @@ float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
 //}
 
 
-//=====================================================================
-// 坐标变换
-//=====================================================================
-typedef struct {
-    matrix_t world;         // 世界坐标变换
-    matrix_t view;          // 摄影机坐标变换
-    matrix_t projection;    // 投影变换
-    matrix_t transform;     // transform = world * view * projection
-    float w, h;             // 屏幕大小
-}	transform_t;
-
-
-// 矩阵更新，计算 transform = world * view * projection
-void transform_update(transform_t *ts) {
-    //matrix_t m;
-    //matrix_mul(&m, &ts->world, &ts->view);
-    //m = ts->world * ts->view;
-    //matrix_mul(&ts->transform, &m, &ts->projection);
-    ts->transform = ts->world * ts->view * ts->projection;
-}
-
-// 初始化，设置屏幕长宽
-void transform_init(transform_t *ts, int width, int height) {
-    float aspect = (float)width / ((float)height);
-    //matrix_set_identity(&ts->world);
-    ts->world.setIdentity();
-    //matrix_set_identity(&ts->view);
-    ts->view.setIdentity();
-    //matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, 500.0f);
-    ts->projection = perspective(3.1415926f*0.5f, aspect, 1.0f, 500.0f);
-    ts->w = (float)width;
-    ts->h = (float)height;
-    transform_update(ts);
-}
-
-// 将矢量 x 进行 project 
-void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
-    //matrix_apply(y, x, &ts->transform);
-    *y = *x * ts->transform;
-}
-
-// 检查齐次坐标同 cvv 的边界用于视锥裁剪
-int transform_check_cvv(const vector_t *v) {
-    float w = v->w;
-    int check = 0;
-    if (v->z < 0.0f) check |= 1;
-    if (v->z > w) check |= 2;
-    if (v->x < -w) check |= 4;
-    if (v->x > w) check |= 8;
-    if (v->y < -w) check |= 16;
-    if (v->y > w) check |= 32;
-    return check;
-}
-
-// 归一化，得到屏幕坐标
-void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x) {
-    float rhw = 1.0f / x->w;
-    y->x = (x->x * rhw + 1.0f) * ts->w * 0.5f;
-    y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;
-    y->z = x->z * rhw;
-    y->w = 1.0f;
-}
+////=====================================================================
+//// 坐标变换
+////=====================================================================
+//typedef struct {
+//    matrix_t world;         // 世界坐标变换
+//    matrix_t view;          // 摄影机坐标变换
+//    matrix_t projection;    // 投影变换
+//    matrix_t transform;     // transform = world * view * projection
+//    float w, h;             // 屏幕大小
+//}	transform_t;
+//
+//
+//// 矩阵更新，计算 transform = world * view * projection
+//void transform_update(transform_t *ts) {
+//    //matrix_t m;
+//    //matrix_mul(&m, &ts->world, &ts->view);
+//    //m = ts->world * ts->view;
+//    //matrix_mul(&ts->transform, &m, &ts->projection);
+//    ts->transform = ts->world * ts->view * ts->projection;
+//}
+//
+//// 初始化，设置屏幕长宽
+//void transform_init(transform_t *ts, int width, int height) {
+//    float aspect = (float)width / ((float)height);
+//    //matrix_set_identity(&ts->world);
+//    ts->world.setIdentity();
+//    //matrix_set_identity(&ts->view);
+//    ts->view.setIdentity();
+//    //matrix_set_perspective(&ts->projection, 3.1415926f * 0.5f, aspect, 1.0f, 500.0f);
+//    ts->projection = perspective(3.1415926f*0.5f, aspect, 1.0f, 500.0f);
+//    ts->w = (float)width;
+//    ts->h = (float)height;
+//    transform_update(ts);
+//}
+//
+//// 将矢量 x 进行 project 
+//void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
+//    //matrix_apply(y, x, &ts->transform);
+//    *y = *x * ts->transform;
+//}
+//
+//// 检查齐次坐标同 cvv 的边界用于视锥裁剪
+//int transform_check_cvv(const vector_t *v) {
+//    float w = v->w;
+//    int check = 0;
+//    if (v->z < 0.0f) check |= 1;
+//    if (v->z > w) check |= 2;
+//    if (v->x < -w) check |= 4;
+//    if (v->x > w) check |= 8;
+//    if (v->y < -w) check |= 16;
+//    if (v->y > w) check |= 32;
+//    return check;
+//}
+//
+//// 归一化，得到屏幕坐标
+//void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x) {
+//    float rhw = 1.0f / x->w;
+//    y->x = (x->x * rhw + 1.0f) * ts->w * 0.5f;
+//    y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;
+//    y->z = x->z * rhw;
+//    y->w = 1.0f;
+//}
 
 
 //=====================================================================
@@ -539,7 +540,8 @@ void device_init(device_t *device, int width, int height, void *fb) {
     device->height = height;
     device->background = 0xc0c0c0;
     device->foreground = 0;
-    transform_init(&device->transform, width, height);
+    //transform_init(&device->transform, width, height);
+    device->transform = transform_t(width, height);
     device->render_state = RENDER_STATE_WIREFRAME;
 }
 
@@ -588,7 +590,7 @@ void device_pixel(device_t *device, int x, int y, IUINT32 color) {
     }
 }
 
-// 绘制线段
+// 绘制线段(Bresenham算法)
 void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, IUINT32 c) {
     int x, y, rem = 0;
     if (x1 == x2 && y1 == y2) {
@@ -781,20 +783,26 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
     int render_state = device->render_state;
 
     // 按照 Transform 变化
-    transform_apply(&device->transform, &c1, &v1->pos);
-    transform_apply(&device->transform, &c2, &v2->pos);
-    transform_apply(&device->transform, &c3, &v3->pos);
+    //transform_apply(&device->transform, &c1, &v1->pos);
+    //transform_apply(&device->transform, &c2, &v2->pos);
+    //transform_apply(&device->transform, &c3, &v3->pos);
+    c1 = device->transform.apply(v1->pos);
+    c2 = device->transform.apply(v2->pos);
+    c3 = device->transform.apply(v3->pos);
 
     // 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
     // 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
-    if (transform_check_cvv(&c1) != 0) return;
-    if (transform_check_cvv(&c2) != 0) return;
-    if (transform_check_cvv(&c3) != 0) return;
+    if (transform_check_cvv(c1) != 0) return;
+    if (transform_check_cvv(c2) != 0) return;
+    if (transform_check_cvv(c3) != 0) return;
 
     // 归一化
-    transform_homogenize(&device->transform, &p1, &c1);
-    transform_homogenize(&device->transform, &p2, &c2);
-    transform_homogenize(&device->transform, &p3, &c3);
+    //transform_homogenize(&device->transform, &p1, &c1);
+    //transform_homogenize(&device->transform, &p2, &c2);
+    //transform_homogenize(&device->transform, &p3, &c3);
+    p1 = device->transform.homogenize(c1);
+    p2 = device->transform.homogenize(c2);
+    p3 = device->transform.homogenize(c3);
 
     // 剔除检测
     bool faceCull;
@@ -995,7 +1003,9 @@ void draw_box(device_t *device, float theta) {
     //matrix_set_rotate(&m, -1, -0.5, 1, theta);
     m.setRotate(-1.0f, -0.5f, 1.0f, theta);
     device->transform.world = m;
-    transform_update(&device->transform);
+    //transform_update(&device->transform);
+    device->transform.update();
+
     draw_plane(device, 0, 1, 2, 3);
     //draw_plane(device, 4, 5, 6, 7); //顺时针绕序修正
     draw_plane(device, 7, 6, 5, 4);
@@ -1010,7 +1020,8 @@ void camera_at_zero(device_t *device, float x, float y, float z) {
     point_t eye = point_t(x, y, z), at = point_t(0, 0, 0), up = point_t(0, 0, 1);
     //matrix_set_lookat(&device->transform.view, &eye, &at, &up);
     device->transform.view = lookAt(eye, at, up);
-    transform_update(&device->transform);
+    //transform_update(&device->transform);
+    device->transform.update();
 }
 
 void init_texture(device_t *device) {

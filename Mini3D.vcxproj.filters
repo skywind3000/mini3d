@@ -12,6 +12,9 @@
     <ClInclude Include="matrix_t.h">
       <Filter>Classes</Filter>
     </ClInclude>
+    <ClInclude Include="transform_t.h">
+      <Filter>Classes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mini3d.cpp" />

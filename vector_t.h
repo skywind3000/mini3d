@@ -1,5 +1,5 @@
-﻿#ifndef _VECTOR_T_H_
-#define _VECTOR_T_H_
+﻿#ifndef VECTOR_T_H
+#define VECTOR_T_H
 
 #include <math.h>
 
@@ -12,11 +12,11 @@ public:
     vector_t(float nx, float ny, float nz) :x(nx), y(ny), z(nz), w(1.0f) {}
 
     // 重载赋值运算符并返回引用
-    vector_t& operator=(const vector_t &a)
-    {
-        x = a.x; y = a.y; z = a.z; w = a.w;
-        return *this;
-    }
+    //vector_t& operator=(const vector_t &a)
+    //{
+    //    x = a.x; y = a.y; z = a.z; w = a.w;
+    //    return *this;
+    //}
 
     bool operator==(const vector_t &a) const
     {
@@ -150,4 +150,4 @@ inline vector_t vectorInterp(const vector_t &a, const vector_t &b, float t)
 }
 
 
-#endif // !_VECTOR_T_H_
+#endif // !VECTOR_T_H
