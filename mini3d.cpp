@@ -25,6 +25,7 @@
 #include "vector_t.h"
 #include "matrix_t.h"
 #include "transform_t.h"
+#include "camera_t.h"
 
 typedef unsigned int IUINT32;
 
@@ -318,6 +319,7 @@ float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
 //    y->w = 1.0f;
 //}
 
+camera_t camera;
 
 //=====================================================================
 // 几何计算：顶点、扫描线、边缘、矩形、步长计算
@@ -999,12 +1001,15 @@ void draw_plane(device_t *device, int a, int b, int c, int d) {
 }
 
 void draw_box(device_t *device, float theta) {
-    matrix_t m;
+    //matrix_t m;
     //matrix_set_rotate(&m, -1, -0.5, 1, theta);
-    m.setRotate(-1.0f, -0.5f, 1.0f, theta);
-    device->transform.world = m;
+    //device->transform.world = m;
+    device->transform.world.setRotate(-1.0f, -0.5f, 1.0f, theta);
+    //device->transform.world.setScale(0.5f, 0.5f, 0.5f);
+    device->transform.world.setTranslate(0.5f, 0.0f, 3.0f);
     //transform_update(&device->transform);
     device->transform.update();
+
 
     draw_plane(device, 0, 1, 2, 3);
     //draw_plane(device, 4, 5, 6, 7); //顺时针绕序修正
@@ -1053,7 +1058,7 @@ int main(void)
         return -1;
 
     device_init(&device, 800, 600, screen_fb);
-    camera_at_zero(&device, 3, 0, 0);
+    //camera_at_zero(&device, 3, 0, 0);
 
     init_texture(&device);
     device.render_state = RENDER_STATE_TEXTURE;
@@ -1069,7 +1074,9 @@ int main(void)
     while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
         screen_dispatch();
         device_clear(&device, 1);
-        camera_at_zero(&device, pos, 0, 0);
+        //camera_at_zero(&device, pos, 0, 0);
+        device.transform.view = camera.getViewMatrix();
+        device.transform.update();
 
         if (screen_keys[VK_UP]) pos -= 0.01f;
         if (screen_keys[VK_DOWN]) pos += 0.01f;

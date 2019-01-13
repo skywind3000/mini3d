@@ -80,6 +80,7 @@
     <ClCompile Include="mini3d.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera_t.h" />
     <ClInclude Include="matrix_t.h" />
     <ClInclude Include="transform_t.h" />
     <ClInclude Include="vector_t.h" />

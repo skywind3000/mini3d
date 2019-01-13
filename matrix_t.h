@@ -126,7 +126,7 @@ public:
     // 平移变换
     void setTranslate(float x, float y, float z)
     {
-        setIdentity();
+        //setIdentity();
         m[3][0] = x;
         m[3][1] = y;
         m[3][2] = z;
@@ -135,10 +135,10 @@ public:
     // 缩放变换
     void setScale(float x, float y, float z)
     {
-        setIdentity();
-        m[0][0] = x;
-        m[1][1] = y;
-        m[2][2] = z;
+        //setIdentity();
+        m[0][0] *= x;
+        m[1][1] *= y;
+        m[2][2] *= z;
     }
 
     // 旋转变换
