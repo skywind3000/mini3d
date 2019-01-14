@@ -1078,8 +1078,17 @@ int main(void)
         device.transform.view = camera.getViewMatrix();
         device.transform.update();
 
-        if (screen_keys[VK_UP]) pos -= 0.01f;
-        if (screen_keys[VK_DOWN]) pos += 0.01f;
+        //if (screen_keys[VK_UP]) pos -= 0.01f;
+        //if (screen_keys[VK_DOWN]) pos += 0.01f;
+        if (screen_keys[VK_W])
+            camera.processKeyBoard(FORWARD, 0.01f);
+        if (screen_keys[VK_S])
+            camera.processKeyBoard(BACKWARD, 0.01f);
+        if (screen_keys[VK_A])
+            camera.processKeyBoard(LEFT, 0.01f);
+        if (screen_keys[VK_D])
+            camera.processKeyBoard(RIGHT, 0.01f);
+
         if (screen_keys[VK_LEFT]) alpha += 0.01f;
         if (screen_keys[VK_RIGHT]) alpha -= 0.01f;
 

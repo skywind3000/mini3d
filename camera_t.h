@@ -4,6 +4,13 @@
 #include "matrix_t.h"
 #include "vector_t.h"
 
+// 虚拟按键定义
+#define VK_A 0x41
+#define VK_D 0x44
+#define VK_S 0x53
+#define VK_W 0x57
+
+
 // 平移方向
 enum cameraMovement
 {
