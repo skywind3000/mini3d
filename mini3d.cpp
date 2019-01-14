@@ -26,8 +26,12 @@
 #include "matrix_t.h"
 #include "transform_t.h"
 #include "camera_t.h"
+#include "SDL2/include/SDL.h"
 
 typedef unsigned int IUINT32;
+
+// 窗口分辨率
+const int 
 
 //=====================================================================
 // 数学库：此部分应该不用详解，熟悉 D3D 矩阵变换即可
@@ -1043,6 +1047,8 @@ void init_texture(device_t *device) {
 
 int main(void)
 {
+
+
     device_t device;
     int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
     int mode[] = { CULL_MODE_NONE,CULL_MODE_FRONT,CULL_MODE_BACK };
