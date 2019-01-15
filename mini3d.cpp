@@ -1046,15 +1046,23 @@ void init_texture(device_t *device) {
     device_set_texture(device, texture, 256 * 4, 256, 256);
 }
 
-int main(int argc, char* args[])
+//=====================================================================
+// SDL2 窗口及图形绘制
+//=====================================================================
+SDL_Window* window = nullptr;           // 主窗口
+SDL_Surface* screenSurface = nullptr;   // surface用于渲染
+
+// SDL初始化
+bool sdlInit()
 {
-    // 创建SDL窗口
-    SDL_Window* window = NULL;
-    SDL_Surface* screenSurface = NULL;
+    // 初始化标识
+    bool success = true;
+
     // 初始化窗口
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        success = false;
     }
     else
     {
@@ -1063,6 +1071,7 @@ int main(int argc, char* args[])
         if (window == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+            success = false;
         }
         else
         {
@@ -1076,6 +1085,13 @@ int main(int argc, char* args[])
             SDL_Delay(2000);
         }
     }
+    return  success;
+}
+
+
+int main(int argc, char* args[])
+{
+    sdlInit();
 
     device_t device;
     int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
