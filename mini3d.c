@@ -276,6 +276,15 @@ void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
 	matrix_apply(y, x, &ts->transform);
 }
 
+// backface culling in view space
+int transform_check_ccw_culling(const vector_t *p1, const vector_t *p2, const vector_t *p3) {
+	float u1 = p2->x - p1->x;
+	float v1 = p3->x - p1->x;
+	float u2 = p2->y - p1->y;
+	float v2 = p3->y - p1->y;
+	return (u1 * v2 - u2 * v1) >= 0.0f ? 1 : 0;
+}
+
 // 检查齐次坐标同 cvv 的边界用于视锥裁剪
 int transform_check_cvv(const vector_t *v) {
 	float w = v->w;
@@ -467,6 +476,7 @@ typedef struct {
 #define RENDER_STATE_WIREFRAME      1		// 渲染线框
 #define RENDER_STATE_TEXTURE        2		// 渲染纹理
 #define RENDER_STATE_COLOR          4		// 渲染颜色
+#define RENDER_STATE_CCW_CULLING    8		// cull backfaces
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void device_init(device_t *device, int width, int height, void *fb) {
@@ -674,6 +684,11 @@ void device_draw_primitive(device_t *device, const vertex_t *v1,
 	transform_apply(&device->transform, &c1, &v1->pos);
 	transform_apply(&device->transform, &c2, &v2->pos);
 	transform_apply(&device->transform, &c3, &v3->pos);
+
+	if (render_state & RENDER_STATE_CCW_CULLING) {
+		if (transform_check_ccw_culling(&c1, &c2, &c3) != 0)
+			return;
+	}
 
 	// 裁剪，注意此处可以完善为具体判断几个点在 cvv内以及同cvv相交平面的坐标比例
 	// 进行进一步精细裁剪，将一个分解为几个完全处在 cvv内的三角形
@@ -903,7 +918,12 @@ void init_texture(device_t *device) {
 int main(void)
 {
 	device_t device;
-	int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
+	int states[] = {
+		RENDER_STATE_TEXTURE | RENDER_STATE_CCW_CULLING,
+		RENDER_STATE_COLOR | RENDER_STATE_CCW_CULLING,
+		RENDER_STATE_WIREFRAME | RENDER_STATE_CCW_CULLING,
+		RENDER_STATE_WIREFRAME,
+	};
 	int indicator = 0;
 	int kbhit = 0;
 	float alpha = 1;
@@ -919,7 +939,7 @@ int main(void)
 	camera_at_zero(&device, 3, 0, 0);
 
 	init_texture(&device);
-	device.render_state = RENDER_STATE_TEXTURE;
+	device.render_state = RENDER_STATE_TEXTURE | RENDER_STATE_CCW_CULLING;
 
 	while (screen_exit == 0 && screen_keys[VK_ESCAPE] == 0) {
 		screen_dispatch();
@@ -934,7 +954,7 @@ int main(void)
 		if (screen_keys[VK_SPACE]) {
 			if (kbhit == 0) {
 				kbhit = 1;
-				if (++indicator >= 3) indicator = 0;
+				if (++indicator >= 4) indicator = 0;
 				device.render_state = states[indicator];
 			}
 		}	else {
