@@ -11,7 +11,7 @@
 //   2007.7.02  skywind  implementate texture and color render
 //   2008.3.15  skywind  fixed a trapezoid issue
 //   2015.8.09  skywind  rewrite with more comment
-//   2015.8.12  skywind  adjust interfaces for clearity 
+//   2015.8.12  skywind  adjust interfaces for clarity 
 // 
 //=====================================================================
 #include <stdio.h>
