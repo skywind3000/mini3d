@@ -1,8 +1,9 @@
 # mini3d
+
 3D软件渲染教程，并没有任何性能优化，主要向人说明如何写一个固定管线的软件渲染器。虽然主体代码只有 700行，但是麻雀虽小，五脏俱全。
 
-特性
-===
+## 特性
+
 * 单个文件：源代码只有一个 mini3d.c，单个文件实现所有内容，容易阅读。
 * 独立编译：没有任何第三方库依赖，没有复杂的工程目录。
 * 模型标准：标准 D3D 坐标模型，左手系加 WORLD / VIEW / PROJECTION 三矩阵
@@ -14,8 +15,8 @@
 * 实现精简：渲染引擎只有 700行，模块清晰，主干突出。
 * 详细注释：主要代码详细注释
 
-编译
-===
+## 编译
+
 * mingw: 
 		gcc -O3 mini3d.c -o mini3d.exe -lgdi32
 * msvc:
@@ -23,8 +24,7 @@
 * 已编译版本：
 [https://github.com/skywind3000/mini3d/releases](https://github.com/skywind3000/mini3d/releases)
 
-演示
-===
+## 演示
 
 纹理填充：RENDER_STATE_TEXTURE
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_1.png)
@@ -38,25 +38,26 @@
 增加光照和二次线性插值（朋友给 Mini3D 增加的光照效果截图）
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_3.png)
 
+## 基础作业
 
-基础作业
-=======
 * 增加背面剔除
 * 增加简单光照
 * 提供更多渲染模式
 * 实现二次线性差值的纹理读取
 
-进阶作业
-=======
+## 进阶作业
+
 * 推导并证明程序中用到的所有几何知识
 * 优化顶点计算性能
 * 优化 draw_scanline 性能
 * 从 BMP/TGA 文件加载纹理
 * 载入 BSP 场景并实现漫游
 
+## 原理讲解
 
-欢迎捐赠
-=======
+- [韦易笑：OpenGL 和 DirectX 是如何在只知道顶点的情况下得出像素位置的？](https://www.zhihu.com/question/48299522/answer/799333394)
+
+## 欢迎捐赠
 
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/donation.png)
 
