@@ -56,6 +56,7 @@
 ## 原理讲解
 
 - [韦易笑：OpenGL 和 DirectX 是如何在只知道顶点的情况下得出像素位置的？](https://www.zhihu.com/question/48299522/answer/799333394)
+- [韦易笑：计算机底层是如何访问显卡的？](https://www.zhihu.com/question/20722310/answer/106186157)
 
 ## 欢迎捐赠
 
