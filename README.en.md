@@ -1,76 +1,76 @@
 # mini3d
 
-3D软件渲染教程，并没有任何性能优化，主要向人说明如何写一个固定管线的软件渲染器。虽然主体代码只有 700行，但是麻雀虽小，五脏俱全。
+3D software rendering tutorial, without any performance optimization, mainly explains how to write a fixed pipeline software renderer. Although the main code is only 700 lines, it is small but complete.
 
-## 特性
+## Features
 
-* 单个文件：源代码只有一个 mini3d.c，单个文件实现所有内容，容易阅读。
-* 独立编译：没有任何第三方库依赖，没有复杂的工程目录。
-* 模型标准：标准 D3D 坐标模型，左手系加 WORLD / VIEW / PROJECTION 三矩阵
-* 实现裁剪：简单 CVV 裁剪
-* 纹理支持：最大支持 1024 x 1024 的纹理
-* 深度缓存：使用深度缓存判断图像前后
-* 透视贴图：透视纹理映射以及透视色彩填充
-* 边缘计算：精确的多边形边缘覆盖计算
-* 实现精简：渲染引擎只有 700行，模块清晰，主干突出。
-* 详细注释：主要代码详细注释
+* Single File: The source code consists of only one file, mini3d.c, which implements all the functionality. It is easy to read and understand.
+* Independent Compilation: There is no third-party library dependency and no complex project directory.
+* Model Standard: Uses the standard D3D coordinate model, left-handed system with WORLD/VIEW/PROJECTION matrices.
+* Clipping Implementation: Implements simple CVV (Canonical View Volume) clipping.
+* Texture Support: Supports textures up to a maximum of 1024 x 1024.
+* Depth Buffering: Uses a depth buffer to determine the order of image rendering.
+* Perspective Texture Mapping: Implements perspective texture mapping and perspective color filling.
+* Edge Calculation: Accurately calculates polygon edge coverage.
+* Simplified Implementation: The rendering engine consists of only 700 lines of code, with clear modules and a prominent main structure.
+* Detailed Comments: The primary code is well-documented with detailed comments.
 
-## 编译
+## Compile
 
 * mingw: 
 		gcc -O3 mini3d.c -o mini3d.exe -lgdi32
 * msvc:
 		cl -O2 -nologo mini3d.c 
-* 已编译版本：
+* Compiled version:
 [https://github.com/skywind3000/mini3d/releases](https://github.com/skywind3000/mini3d/releases)
 
-## 演示
+## Demonstration
 
-纹理填充：RENDER_STATE_TEXTURE
+Texture Mapping：RENDER_STATE_TEXTURE
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_1.png)
 
-色彩填充：RENDER_STATE_COLOR
+Color Filling：RENDER_STATE_COLOR
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_0.png)
 
-线框绘制：RENDER_STATE_WIREFRAME
+Wireframe Rendering：RENDER_STATE_WIREFRAME
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_2.png)
 
-增加光照和二次线性插值（朋友给 Mini3D 增加的光照效果截图）
+Added Lighting and Bicubic Interpolation (screenshot of lighting effect added by a friend to Mini3D)
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/mini_3.png)
 
-## 基础作业
+## Basic TO-DO:
 
-* 增加背面剔除
-* 增加简单光照
-* 提供更多渲染模式
-* 实现二次线性差值的纹理读取
+* Add backface culling
+* Implement simple lighting
+* Provide more rendering modes
+* Implement texture sampling with bicubic interpolation
 
-## 进阶作业
+## Advanced TO-DO:
 
-* 推导并证明程序中用到的所有几何知识
-* 优化顶点计算性能
-* 优化 draw_scanline 性能
-* 从 BMP/TGA 文件加载纹理
-* 载入 BSP 场景并实现漫游
+* Derive and prove all geometric knowledge used in the program
+* Optimize vertex computation performance
+* Optimize draw_scanline performance
+* Load textures from BMP/TGA files
+* Load BSP scenes and implement roaming.
 
-## 原理讲解
+## Explanation of principles
 
-- [韦易笑：OpenGL 和 DirectX 是如何在只知道顶点的情况下得出像素位置的？](https://www.zhihu.com/question/48299522/answer/799333394)
-- [韦易笑：计算机底层是如何访问显卡的？](https://www.zhihu.com/question/20722310/answer/106186157)
+- [Wei Yixiao: How do OpenGL and DirectX determine the position of pixels only based on vertices?](https://www.zhihu.com/question/48299522/answer/799333394)
+- [Wei Yixiao: How does the computer access the graphics card at a low level?](https://www.zhihu.com/question/20722310/answer/106186157)
 
-## 相关项目
+## Related Projects
 
-- [RenderHelp](https://github.com/skywind3000/RenderHelp)：另外一个支持可编程渲染管线的精简软渲染器实现，详细见 [介绍](https://zhuanlan.zhihu.com/p/182872172)。
+- [RenderHelp](https://github.com/skywind3000/RenderHelp)：Another implementation of a streamlined software renderer with support for programmable rendering pipelines, for more details see (https://zhuanlan.zhihu.com/p/182872172)。
 
-## 欢迎捐赠
+## Welcome to donate:
 
 ![](https://raw.githubusercontent.com/skywind3000/mini3d/master/images/donation.png)
 
-您的捐助是对该教程的最大肯定，欢迎使用支付宝手扫描上面的二维码，进行捐赠。捐赠款项将用于完善教程文档和图例，以及帮助我写出更多有意思的教程来。
+Your donation is the greatest recognition for this tutorial. You are welcome to use Alipay to scan the QR code above to make a donation. The donated funds will be used to improve the tutorial documentation and illustrations, as well as to help me write more interesting tutorials.
 
 
 
-欢迎关注
+## Welcome to follow us:
 
 blog: http://www.skywind.me
 
