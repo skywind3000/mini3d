@@ -60,7 +60,7 @@ Added Lighting and Bicubic Interpolation (screenshot of lighting effect added by
 
 ## Related Projects
 
-- [RenderHelp](https://github.com/skywind3000/RenderHelp)：Another implementation of a streamlined software renderer with support for programmable rendering pipelines, for more details see (https://zhuanlan.zhihu.com/p/182872172)。
+- [RenderHelp](https://github.com/skywind3000/RenderHelp)：Another implementation of a streamlined software renderer with support for programmable rendering pipelines, for more details see https://zhuanlan.zhihu.com/p/182872172
 
 ## Welcome to donate:
 
