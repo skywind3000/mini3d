@@ -2,7 +2,7 @@
 
 3D软件渲染教程，并没有任何性能优化，主要向人说明如何写一个固定管线的软件渲染器。虽然主体代码只有 700行，但是麻雀虽小，五脏俱全。
 
-[README in English](README.en.md)
+【[README in English](README.en.md)】
 
 ## 特性
 
