@@ -55,12 +55,12 @@ Added Lighting and Bicubic Interpolation (screenshot of lighting effect added by
 
 ## Explanation of principles
 
-- [Wei Yixiao: How do OpenGL and DirectX determine the position of pixels only based on vertices?](https://www.zhihu.com/question/48299522/answer/799333394)
-- [Wei Yixiao: How does the computer access the graphics card at a low level?](https://www.zhihu.com/question/20722310/answer/106186157)
+- [Wei Yixiao: How do OpenGL and DirectX determine the position of pixels only based on vertices?](https://skywind.me/blog/archives/2594)
+- [Wei Yixiao: How does the computer access the graphics card at a low level?](https://skywind.me/blog/archives/1774)
 
 ## Related Projects
 
-- [RenderHelp](https://github.com/skywind3000/RenderHelp)：Another implementation of a streamlined software renderer with support for programmable rendering pipelines, for more details see https://zhuanlan.zhihu.com/p/182872172
+- [RenderHelp](https://github.com/skywind3000/RenderHelp)：Another implementation of a streamlined software renderer with support for programmable rendering pipelines, for more details see https://skywind.me/blog/archives/2589
 
 ## Welcome to donate:
 
@@ -72,6 +72,6 @@ Your donation is the greatest recognition for this tutorial. You are welcome to 
 
 ## Welcome to follow us:
 
-blog: http://www.skywind.me
+blog: https://skywind.me/blog
 
 zhihu: https://www.zhihu.com/people/skywind3000 
