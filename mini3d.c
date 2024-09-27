@@ -400,24 +400,21 @@ int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
 	k = (p3->pos.y - p1->pos.y) / (p2->pos.y - p1->pos.y);
 	x = p1->pos.x + (p2->pos.x - p1->pos.x) * k;
 
+	trap[0].left.v1 = *p1;
+	trap[0].right.v1 = *p1;
+	trap[1].right.v2 = *p3;
+	trap[1].left.v2 = *p3;
+	
 	if (x <= p3->pos.x) {		// triangle left
-		trap[0].left.v1 = *p1;
 		trap[0].left.v2 = *p2;
-		trap[0].right.v1 = *p1;
 		trap[0].right.v2 = *p3;
 		trap[1].left.v1 = *p2;
-		trap[1].left.v2 = *p3;
 		trap[1].right.v1 = *p1;
-		trap[1].right.v2 = *p3;
 	}	else {					// triangle right
-		trap[0].left.v1 = *p1;
 		trap[0].left.v2 = *p3;
-		trap[0].right.v1 = *p1;
 		trap[0].right.v2 = *p2;
 		trap[1].left.v1 = *p1;
-		trap[1].left.v2 = *p3;
 		trap[1].right.v1 = *p2;
-		trap[1].right.v2 = *p3;
 	}
 
 	return 2;
